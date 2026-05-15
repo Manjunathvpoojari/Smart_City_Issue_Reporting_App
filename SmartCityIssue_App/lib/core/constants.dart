@@ -50,8 +50,8 @@ class AppConstants {
   static const String appName = 'SmartCity';
   static const String appVersion = '1.0.0';
 
-  // Map defaults (Mangaluru, Karnataka)
-  static const double defaultLat = 12.9141;
-  static const double defaultLng = 74.8560;
+  // Map defaults (Shivamogga, Karnataka)
+  static const double defaultLat = 13.9299;
+  static const double defaultLng = 75.5681;
   static const double defaultZoom = 13.0;
 }
