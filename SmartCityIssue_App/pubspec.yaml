@@ -53,6 +53,7 @@ dependencies:
   connectivity_plus: ^6.0.3
   timeago: ^3.6.1
   path: ^1.9.0
+  fl_chart: ^0.68.0 
 
 dev_dependencies:
   flutter_test:
@@ -60,12 +61,14 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   build_runner: ^2.4.9
   riverpod_generator: ^2.4.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
     - assets/icons/
+    - assets/animations/
   fonts:
     - family: DMSans
       fonts:
@@ -74,3 +77,11 @@ flutter:
           weight: 500
         - asset: assets/fonts/DMSans-Bold.ttf
           weight: 700
+  
+flutter_launcher_icons:
+  android: true
+  ios: true              # ← change false to true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1D5E3F"
+  adaptive_icon_foreground: "assets/images/logo.png"

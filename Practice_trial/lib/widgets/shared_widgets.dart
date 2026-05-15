@@ -69,7 +69,7 @@ class ScAppBar extends StatelessWidget {
   }
 }
 
-// ── Admin App Bar (dark green with ADMIN badge) ────────────
+// ── Admin App Bar ──────────────────────────────────────────
 class AdminAppBar extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -265,69 +265,124 @@ class IssueCard extends StatelessWidget {
   }
 }
 
-// ── Map Placeholder with roads + pins ─────────────────────
+// ── Map Placeholder — lightweight, NO CustomPaint ──────────
+// Uses a simple Stack of positioned Containers. Zero heavy ops.
 class MapPlaceholder extends StatelessWidget {
   final bool singlePin;
   const MapPlaceholder({super.key, this.singlePin = false});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(color: const Color(0xFFC8E6D4)),
-        CustomPaint(painter: _RoadPainter(), size: Size.infinite),
-        if (!singlePin) ...[
-          _pin(AppColors.red, 0.38, 0.22),
-          _pin(AppColors.red, 0.20, 0.55),
-          _pin(AppColors.blue, 0.58, 0.68),
-          _pin(AppColors.green, 0.30, 0.80),
-          _pin(AppColors.red, 0.68, 0.38),
-        ] else
-          _pin(AppColors.red, 0.42, 0.48),
-      ],
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        return Stack(
+          children: [
+            // Base green map color
+            Container(color: const Color(0xFFC8E6D4)),
+
+            // Main horizontal road
+            Positioned(
+              top: h * 0.44,
+              left: 0,
+              right: 0,
+              height: h * 0.08,
+              child: Container(color: Colors.white.withOpacity(0.55)),
+            ),
+            // Main vertical road
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: w * 0.47,
+              width: w * 0.06,
+              child: Container(color: Colors.white.withOpacity(0.55)),
+            ),
+            // Secondary horizontal roads
+            Positioned(
+              top: h * 0.19,
+              left: 0,
+              right: 0,
+              height: 3,
+              child: Container(color: Colors.white.withOpacity(0.32)),
+            ),
+            Positioned(
+              top: h * 0.74,
+              left: 0,
+              right: 0,
+              height: 3,
+              child: Container(color: Colors.white.withOpacity(0.32)),
+            ),
+            // Secondary vertical roads
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: w * 0.19,
+              width: 3,
+              child: Container(color: Colors.white.withOpacity(0.32)),
+            ),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: w * 0.77,
+              width: 3,
+              child: Container(color: Colors.white.withOpacity(0.32)),
+            ),
+
+            // Pins
+            if (!singlePin) ...[
+              _pin(w, h, AppColors.red, 0.22, 0.38),
+              _pin(w, h, AppColors.red, 0.55, 0.20),
+              _pin(w, h, AppColors.blue, 0.68, 0.58),
+              _pin(w, h, AppColors.green, 0.80, 0.30),
+              _pin(w, h, AppColors.red, 0.38, 0.68),
+            ] else
+              _pin(w, h, AppColors.red, 0.42, 0.48),
+
+            // Map label
+            Positioned(
+              bottom: 6,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Mysuru',
+                  style: TextStyle(fontSize: 9, color: AppColors.muted),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _pin(Color color, double top, double left) {
-    return Positioned.fill(
-      child: Align(
-        alignment: Alignment(left * 2 - 1, top * 2 - 1),
-        child: Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 3)],
-          ),
+  Widget _pin(double w, double h, Color color, double top, double left) {
+    return Positioned(
+      top: h * top - 7,
+      left: w * left - 7,
+      child: Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
       ),
     );
   }
-}
-
-class _RoadPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    var p = Paint()..color = Colors.white.withOpacity(0.55);
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.height * 0.45, size.width, size.height * 0.07),
-      p,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(size.width * 0.48, 0, size.width * 0.04, size.height),
-      p,
-    );
-    p.color = Colors.white.withOpacity(0.32);
-    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.2, size.width, 4), p);
-    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.75, size.width, 4), p);
-    canvas.drawRect(Rect.fromLTWH(size.width * 0.2, 0, 4, size.height), p);
-    canvas.drawRect(Rect.fromLTWH(size.width * 0.78, 0, 4, size.height), p);
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
 
 // ── Field Label ────────────────────────────────────────────
@@ -414,7 +469,7 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-// ── Input Decoration helper ────────────────────────────────
+// ── Input Decoration ───────────────────────────────────────
 InputDecoration scInputDecoration(String hint) {
   return InputDecoration(
     hintText: hint,
@@ -574,47 +629,62 @@ class NotifCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: const BorderSide(color: AppColors.border),
-          right: const BorderSide(color: AppColors.border),
-          bottom: const BorderSide(color: AppColors.border),
-          left: BorderSide(color: leftColor, width: 3),
-        ),
+        border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+      clipBehavior: Clip.hardEdge,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Colored left accent bar
+            Container(width: 4, color: leftColor),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            body,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            time,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: const TextStyle(fontSize: 10, color: AppColors.muted),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
