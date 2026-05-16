@@ -6,6 +6,7 @@ import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/issue_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../widgets/app_widgets.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -15,10 +16,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
     final issuesAsync = ref.watch(myIssuesStreamProvider);
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(lang.t('profile'))),
       body: profileAsync.when(
         loading: () => const LoadingWidget(),
         error: (e, _) => ErrorRetryWidget(
@@ -51,7 +53,7 @@ class ProfileScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // ── AVATAR + INFO ──────────────────────────────
+              // ── Avatar ──────────────────────────────────
               Center(
                 child: Column(
                   children: [
@@ -60,7 +62,7 @@ class ProfileScreen extends ConsumerWidget {
                       height: 88,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [AppTheme.primary, AppTheme.secondary],
+                          colors: [AppTheme.primary, AppTheme.primaryLight],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
@@ -68,7 +70,7 @@ class ProfileScreen extends ConsumerWidget {
                             color: AppTheme.primary.withOpacity(0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
-                          ),
+                          )
                         ],
                       ),
                       child: Center(
@@ -77,53 +79,44 @@ class ProfileScreen extends ConsumerWidget {
                               ? profile.name[0].toUpperCase()
                               : '?',
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                          ),
+                              color: Colors.white,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      profile.name,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                    Text(profile.name,
+                        style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
-                    Text(
-                      profile.email,
-                      style: const TextStyle(
-                          color: AppTheme.textMuted, fontSize: 14),
-                    ),
+                    Text(profile.email,
+                        style: const TextStyle(
+                            color: AppTheme.textMuted, fontSize: 14)),
                     const SizedBox(height: 10),
                     if (profile.isAdmin)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppTheme.secondary.withOpacity(0.15),
+                          color: AppTheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: AppTheme.secondary.withOpacity(0.3)),
+                              color: AppTheme.primary.withOpacity(0.3)),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.shield_rounded,
-                                size: 13, color: AppTheme.secondary),
+                                size: 13, color: AppTheme.primary),
                             SizedBox(width: 5),
-                            Text(
-                              'Admin',
-                              style: TextStyle(
-                                color: AppTheme.secondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            Text('Admin',
+                                style: TextStyle(
+                                    color: AppTheme.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700)),
                           ],
                         ),
                       ),
@@ -132,51 +125,88 @@ class ProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 28),
 
-              // ── STATS ──────────────────────────────────────
+              // ── Stats ────────────────────────────────────
               Row(
                 children: [
                   _StatCard(
-                      label: 'Reported', value: '${issues.length}', icon: '📍'),
+                      label: lang.t('reported'),
+                      value: '${issues.length}',
+                      icon: '📍'),
                   const SizedBox(width: 12),
-                  _StatCard(label: 'Resolved', value: '$resolved', icon: '✅'),
+                  _StatCard(
+                      label: lang.t('resolved'), value: '$resolved', icon: '✅'),
                   const SizedBox(width: 12),
-                  _StatCard(label: 'Pending', value: '$pending', icon: '⏳'),
+                  _StatCard(
+                      label: lang.t('pending'), value: '$pending', icon: '⏳'),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // ── MENU ITEMS ─────────────────────────────────
+              // ── Menu Items ───────────────────────────────
               _MenuItem(
                 icon: Icons.list_alt_rounded,
-                label: 'My Reports',
+                label: lang.t('my_reports'),
                 onTap: () => context.go('/my-reports'),
               ),
               if (profile.isAdmin)
                 _MenuItem(
                   icon: Icons.admin_panel_settings_rounded,
-                  label: 'Admin Dashboard',
-                  color: AppTheme.secondary,
+                  label: lang.t('admin_dashboard'),
+                  color: AppTheme.primary,
                   onTap: () => context.go('/admin'),
                 ),
+
+              // ── Language Selector ────────────────────────
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.border),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.language_rounded,
+                      color: AppTheme.textSecondary, size: 22),
+                  title: Text(lang.t('language'),
+                      style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(lang.flag, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 6),
+                      Text(lang.displayName,
+                          style: const TextStyle(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppTheme.textMuted),
+                    ],
+                  ),
+                  onTap: () => _showLanguagePicker(context, ref, lang),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+
               _MenuItem(
                 icon: Icons.info_outline_rounded,
-                label: 'App Version',
-                trailing: Text(
-                  AppConstants.appVersion,
-                  style: const TextStyle(color: AppTheme.textMuted),
-                ),
+                label: lang.t('app_version'),
+                trailing: Text(AppConstants.appVersion,
+                    style: const TextStyle(color: AppTheme.textMuted)),
                 onTap: () {},
               ),
               const SizedBox(height: 12),
-
-              // ── SIGN OUT ───────────────────────────────────
               _MenuItem(
                 icon: Icons.logout_rounded,
-                label: 'Sign Out',
+                label: lang.t('sign_out'),
                 color: AppTheme.error,
-                onTap: () => _signOut(context, ref),
+                onTap: () => _signOut(context, ref, lang),
               ),
-
               const SizedBox(height: 32),
             ],
           );
@@ -185,26 +215,98 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-    // Capture navigator before async gap
-    // ignore: unused_local_variable
-    final navigator = Navigator.of(context);
+  void _showLanguagePicker(
+      BuildContext context, WidgetRef ref, AppLanguage current) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppTheme.border,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(current.t('select_language'),
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16)),
+            const SizedBox(height: 16),
+            ...AppLanguage.values.map((language) {
+              final isSelected = language == current;
+              return GestureDetector(
+                onTap: () {
+                  ref.read(languageProvider.notifier).setLanguage(language);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected ? AppTheme.accentLight : AppTheme.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primary : AppTheme.border,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(language.flag, style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: 12),
+                      Text(language.displayName,
+                          style: TextStyle(
+                            color: isSelected
+                                ? AppTheme.primary
+                                : AppTheme.textPrimary,
+                            fontWeight:
+                                isSelected ? FontWeight.w700 : FontWeight.w400,
+                            fontSize: 15,
+                          )),
+                      const Spacer(),
+                      if (isSelected)
+                        const Icon(Icons.check_circle_rounded,
+                            color: AppTheme.primary, size: 20),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Future<void> _signOut(
+      BuildContext context, WidgetRef ref, AppLanguage lang) async {
     final confirm = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Sign Out',
-          style: TextStyle(
-              color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'Are you sure you want to sign out?',
-          style: TextStyle(color: AppTheme.textSecondary),
-        ),
+        title: Text(lang.t('sign_out'),
+            style: const TextStyle(
+                color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
+        content: Text(lang.t('sign_out_confirm'),
+            style: const TextStyle(color: AppTheme.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -218,72 +320,46 @@ class ProfileScreen extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child:
-                const Text('Sign Out', style: TextStyle(color: Colors.white)),
+            child: Text(lang.t('sign_out'),
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
-
     if (confirm == true) {
-      // Sign out from Supabase
       await ref.read(authServiceProvider).signOut();
-      // _AuthNotifier in router.dart listens to auth state change
-      // and automatically redirects to /login — no manual navigation needed
     }
   }
 }
 
-// ── STAT CARD ─────────────────────────────────────────────────────────────────
-
 class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String icon;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
+  final String label, value, icon;
+  const _StatCard(
+      {required this.label, required this.value, required this.icon});
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Column(
-          children: [
+  Widget build(BuildContext context) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Column(children: [
             Text(icon, style: const TextStyle(fontSize: 22)),
             const SizedBox(height: 6),
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 11,
-              ),
-            ),
-          ],
+            Text(value,
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800)),
+            Text(label,
+                style:
+                    const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+          ]),
         ),
-      ),
-    );
-  }
+      );
 }
-
-// ── MENU ITEM ─────────────────────────────────────────────────────────────────
 
 class _MenuItem extends StatelessWidget {
   final IconData icon;
@@ -291,45 +367,33 @@ class _MenuItem extends StatelessWidget {
   final VoidCallback onTap;
   final Color? color;
   final Widget? trailing;
-
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-    this.trailing,
-  });
-
+  const _MenuItem(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      this.color,
+      this.trailing});
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: color ?? AppTheme.textSecondary,
-          size: 22,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: color ?? AppTheme.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-        trailing: trailing ??
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.border),
         ),
-      ),
-    );
-  }
+        child: ListTile(
+          leading: Icon(icon, color: color ?? AppTheme.textSecondary, size: 22),
+          title: Text(label,
+              style: TextStyle(
+                  color: color ?? AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14)),
+          trailing: trailing ??
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppTheme.textMuted),
+          onTap: onTap,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
 }
