@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants.dart';
+import '../../core/l10n_extension.dart';
 import '../../core/theme.dart';
 import '../../services/issue_service.dart';
 import '../../services/location_service.dart';
@@ -56,6 +57,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final l10n = context.l10n;
     try {
       final picked = await _picker.pickImage(
         source: source,
@@ -70,7 +72,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not pick image: $e'),
+            content: Text('${l10n.failedToLoad}: $e'),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -80,6 +82,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   }
 
   void _showImagePicker() {
+    final l10n = context.l10n;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.cardBg,
@@ -93,9 +96,9 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Add Photo',
-                style: TextStyle(
+              Text(
+                l10n.addPhoto,
+                style: const TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -105,8 +108,8 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
               ListTile(
                 leading: const Icon(Icons.camera_alt_rounded,
                     color: AppTheme.primary),
-                title: const Text('Camera',
-                    style: TextStyle(color: AppTheme.textPrimary)),
+                title: Text(l10n.camera,
+                    style: const TextStyle(color: AppTheme.textPrimary)),
                 onTap: () => _pickImage(ImageSource.camera),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -114,8 +117,8 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
               ListTile(
                 leading: const Icon(Icons.photo_library_rounded,
                     color: AppTheme.secondary),
-                title: const Text('Gallery',
-                    style: TextStyle(color: AppTheme.textPrimary)),
+                title: Text(l10n.gallery,
+                    style: const TextStyle(color: AppTheme.textPrimary)),
                 onTap: () => _pickImage(ImageSource.gallery),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -128,13 +131,13 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = context.l10n;
     if (!_formKey.currentState!.validate()) return;
 
-    // Location check
     if (_lat == null || _lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location not available. Tap retry to detect again.'),
+        SnackBar(
+          content: Text(l10n.locationUnavailable),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -144,17 +147,11 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
     setState(() => _submitting = true);
 
     try {
-      // Upload image if selected
       String? imageUrl;
       if (_image != null) {
         imageUrl = await _storageService.uploadIssueImage(_image!);
-        if (imageUrl == null) {
-          // Image upload failed but continue without image
-          debugPrint('Image upload failed, submitting without image');
-        }
       }
 
-      // Submit issue
       final issue = await _issueService.submitIssue(
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
@@ -167,28 +164,26 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
       if (mounted) {
         if (issue != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Issue reported successfully!'),
+            SnackBar(
+              content: Text('✅ ${l10n.submitSuccess}'),
               backgroundColor: AppTheme.success,
             ),
           );
           context.go('/my-reports');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Failed to submit issue. Check your connection and try again.'),
+            SnackBar(
+              content: Text(l10n.submitFailed),
               backgroundColor: AppTheme.error,
             ),
           );
         }
       }
     } catch (e) {
-      debugPrint('Submit error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${l10n.failedToLoad}: $e'),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -207,10 +202,12 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Report Issue'),
+        title: Text(l10n.reportIssue),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
@@ -221,7 +218,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // ── PHOTO PICKER ──────────────────────────────
+            // ── PHOTO PICKER ─────────────────────────────────────
             GestureDetector(
               onTap: _showImagePicker,
               child: Container(
@@ -272,17 +269,17 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                                 color: AppTheme.primary, size: 28),
                           ),
                           const SizedBox(height: 10),
-                          const Text(
-                            'Tap to add photo',
-                            style: TextStyle(
+                          Text(
+                            l10n.tapToAddPhoto,
+                            style: const TextStyle(
                               color: AppTheme.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Recommended for faster resolution',
-                            style: TextStyle(
+                          Text(
+                            l10n.photoRecommended,
+                            style: const TextStyle(
                                 color: AppTheme.textMuted, fontSize: 12),
                           ),
                         ],
@@ -291,10 +288,10 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── CATEGORY ──────────────────────────────────
-            const Text(
-              'Category',
-              style: TextStyle(
+            // ── CATEGORY ─────────────────────────────────────────
+            Text(
+              l10n.category,
+              style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -351,30 +348,30 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── TITLE ─────────────────────────────────────
+            // ── TITLE ─────────────────────────────────────────────
             TextFormField(
               controller: _titleCtrl,
               style: const TextStyle(color: AppTheme.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'Issue Title',
-                hintText: 'e.g. Large pothole on MG Road',
+              decoration: InputDecoration(
+                labelText: l10n.issueTitle,
+                hintText: l10n.issueTitleHint,
                 prefixIcon:
-                    Icon(Icons.title_rounded, color: AppTheme.textMuted),
+                    const Icon(Icons.title_rounded, color: AppTheme.textMuted),
               ),
               validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Title is required' : null,
+                  v == null || v.trim().isEmpty ? l10n.issueTitle : null,
               maxLength: 80,
             ),
             const SizedBox(height: 16),
 
-            // ── DESCRIPTION ───────────────────────────────
+            // ── DESCRIPTION ───────────────────────────────────────
             TextFormField(
               controller: _descCtrl,
               style: const TextStyle(color: AppTheme.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                hintText: 'Describe the issue in detail...',
-                prefixIcon: Padding(
+              decoration: InputDecoration(
+                labelText: l10n.description,
+                hintText: l10n.descriptionHint,
+                prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 64),
                   child: Icon(Icons.description_rounded,
                       color: AppTheme.textMuted),
@@ -383,13 +380,12 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
               ),
               maxLines: 4,
               maxLength: 300,
-              validator: (v) => v == null || v.trim().isEmpty
-                  ? 'Description is required'
-                  : null,
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? l10n.description : null,
             ),
             const SizedBox(height: 16),
 
-            // ── LOCATION ──────────────────────────────────
+            // ── LOCATION ──────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -410,25 +406,27 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _loadingLocation
-                        ? const Row(children: [
-                            SizedBox(
+                        ? Row(children: [
+                            const SizedBox(
                               width: 14,
                               height: 14,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: AppTheme.primary),
+                                strokeWidth: 2,
+                                color: AppTheme.primary,
+                              ),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'Detecting location...',
-                              style: TextStyle(
+                              l10n.detectingLocation,
+                              style: const TextStyle(
                                   color: AppTheme.textMuted, fontSize: 13),
                             ),
                           ])
                         : Text(
                             _address ??
                                 (_lat != null
-                                    ? 'Location detected ✓'
-                                    : 'Location unavailable'),
+                                    ? '${l10n.locationDetected} ✓'
+                                    : l10n.locationUnavailable),
                             style: TextStyle(
                               color: _lat != null
                                   ? AppTheme.textPrimary
@@ -441,17 +439,17 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                   if (!_loadingLocation)
                     TextButton(
                       onPressed: _fetchLocation,
-                      child:
-                          const Text('Retry', style: TextStyle(fontSize: 12)),
+                      child: Text(l10n.retryLocation,
+                          style: const TextStyle(fontSize: 12)),
                     ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
 
-            // ── SUBMIT BUTTON ─────────────────────────────
+            // ── SUBMIT ────────────────────────────────────────────
             GradientButton(
-              label: 'Submit Report',
+              label: l10n.submit,
               icon: Icons.send_rounded,
               onPressed: _submitting ? null : _submit,
               isLoading: _submitting,

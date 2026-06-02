@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../core/constants.dart';
+import '../../core/l10n_extension.dart';
 import '../../core/theme.dart';
 import '../../models/issue_model.dart';
 import '../../providers/auth_provider.dart';
@@ -22,10 +23,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _mapController = MapController();
   String _selectedCategory = 'All';
-  bool _showMap = true; // toggle map/list view
+  bool _showMap = true;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final issuesAsync = ref.watch(allIssuesStreamProvider);
     final profile = ref.watch(userProfileProvider).valueOrNull;
     final isAdmin = ref.watch(isAdminProvider);
@@ -33,9 +35,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: issuesAsync.when(
-        loading: () => const LoadingWidget(message: 'Loading city data...'),
+        loading: () => LoadingWidget(message: l10n.loadingMap),
         error: (e, _) => ErrorRetryWidget(
-          message: 'Failed to load issues',
+          message: l10n.failedToLoad,
           onRetry: () => ref.invalidate(allIssuesStreamProvider),
         ),
         data: (issues) {
@@ -50,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return CustomScrollView(
             slivers: [
-              // ── App Bar ───────────────────────────────────────
+              // ── App Bar ─────────────────────────────────────────────
               SliverAppBar(
                 pinned: true,
                 backgroundColor: AppTheme.primary,
@@ -76,7 +78,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _greeting(profile?.name),
+                                    _greeting(profile?.name, l10n.goodMorning,
+                                        l10n.goodAfternoon, l10n.goodEvening),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -84,13 +87,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Row(
+                                  Row(
                                     children: [
-                                      Icon(Icons.location_on_rounded,
+                                      const Icon(Icons.location_on_rounded,
                                           size: 12, color: Colors.white70),
-                                      SizedBox(width: 3),
-                                      Text('Shivamogga, Karnataka',
-                                          style: TextStyle(
+                                      const SizedBox(width: 3),
+                                      Text(l10n.shimoga,
+                                          style: const TextStyle(
                                               color: Colors.white70,
                                               fontSize: 12)),
                                     ],
@@ -110,13 +113,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     border: Border.all(
                                         color: Colors.white.withOpacity(0.4)),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     children: [
-                                      Icon(Icons.admin_panel_settings_rounded,
-                                          size: 14, color: Colors.white),
-                                      SizedBox(width: 4),
-                                      Text('Admin',
-                                          style: TextStyle(
+                                      const Icon(
+                                          Icons.admin_panel_settings_rounded,
+                                          size: 14,
+                                          color: Colors.white),
+                                      const SizedBox(width: 4),
+                                      Text(l10n.admin,
+                                          style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w700)),
@@ -133,9 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 bottom: PreferredSize(
                   preferredSize: const Size.fromHeight(0),
                   child: Container(
-                    height: 1,
-                    color: AppTheme.primary.withOpacity(0.3),
-                  ),
+                      height: 1, color: AppTheme.primary.withOpacity(0.3)),
                 ),
               ),
 
@@ -143,34 +146,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Stats Row ────────────────────────────────
+                    // ── Stats Row ──────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       child: Row(
                         children: [
                           _StatCard(
-                            label: 'Total',
+                            label: l10n.total,
                             value: '${issues.length}',
                             icon: Icons.location_on_rounded,
                             color: AppTheme.primary,
                           ),
                           const SizedBox(width: 10),
                           _StatCard(
-                            label: 'Pending',
+                            label: l10n.pending,
                             value: '$pending',
                             icon: Icons.hourglass_empty_rounded,
                             color: AppTheme.pendingColor,
                           ),
                           const SizedBox(width: 10),
                           _StatCard(
-                            label: 'Active',
+                            label: l10n.active,
                             value: '$inProgress',
                             icon: Icons.autorenew_rounded,
                             color: AppTheme.inProgressColor,
                           ),
                           const SizedBox(width: 10),
                           _StatCard(
-                            label: 'Resolved',
+                            label: l10n.resolved,
                             value: '$resolved',
                             icon: Icons.check_circle_rounded,
                             color: AppTheme.resolvedColor,
@@ -179,7 +182,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
-                    // ── Category Filter ───────────────────────────
+                    // ── Category Filter ────────────────────────────────
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 36,
@@ -227,20 +230,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
-                    // ── Map / List Toggle ─────────────────────────
+                    // ── Map / List Toggle ──────────────────────────────
                     const SizedBox(height: 14),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
-                          const Text('City Map',
-                              style: TextStyle(
+                          Text(l10n.cityMap,
+                              style: const TextStyle(
                                   color: AppTheme.textPrimary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700)),
                           const Spacer(),
                           _ToggleButton(
-                            label: 'Map',
+                            label: l10n.map,
                             icon: Icons.map_rounded,
                             active: _showMap,
                             onTap: () => setState(() => _showMap = true),
@@ -256,7 +259,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
-                    // ── Map ───────────────────────────────────────
+                    // ── Map ───────────────────────────────────────────
                     const SizedBox(height: 10),
                     if (_showMap)
                       Padding(
@@ -295,7 +298,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
 
-                    // ── Map Legend ────────────────────────────────
+                    // ── Map Legend ─────────────────────────────────────
                     if (_showMap) ...[
                       const SizedBox(height: 10),
                       Padding(
@@ -303,36 +306,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Row(
                           children: [
                             _LegendDot(
-                                color: AppTheme.pendingColor, label: 'Pending'),
+                                color: AppTheme.pendingColor,
+                                label: l10n.pending),
                             const SizedBox(width: 14),
                             _LegendDot(
                                 color: AppTheme.inProgressColor,
-                                label: 'In Progress'),
+                                label: l10n.inProgress),
                             const SizedBox(width: 14),
                             _LegendDot(
                                 color: AppTheme.resolvedColor,
-                                label: 'Resolved'),
+                                label: l10n.resolved),
                           ],
                         ),
                       ),
                     ],
 
-                    // ── Recent Issues ─────────────────────────────
+                    // ── Recent Issues ──────────────────────────────────
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
-                          const Text('Recent Issues',
-                              style: TextStyle(
+                          Text(l10n.recentIssues,
+                              style: const TextStyle(
                                   color: AppTheme.textPrimary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700)),
                           const Spacer(),
                           GestureDetector(
                             onTap: () => context.go('/my-reports'),
-                            child: const Text('View all',
-                                style: TextStyle(
+                            child: Text(l10n.viewAll,
+                                style: const TextStyle(
                                     color: AppTheme.primary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600)),
@@ -342,12 +346,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     if (filtered.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(32),
+                      Padding(
+                        padding: const EdgeInsets.all(32),
                         child: EmptyState(
                           emoji: '🎉',
-                          title: 'No Issues Found',
-                          subtitle: 'No issues match the selected filter.',
+                          title: l10n.noIssuesFound,
+                          subtitle: l10n.allResolved,
                         ),
                       )
                     else
@@ -372,8 +376,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onPressed: () => context.go('/report'),
         backgroundColor: AppTheme.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Report Issue',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        label: Text(l10n.reportIssue,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w700)),
         elevation: 4,
       ),
     );
@@ -419,13 +424,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _greeting(String? name) {
+  String _greeting(
+      String? name, String morning, String afternoon, String evening) {
     final hour = DateTime.now().hour;
     final part = hour < 12
-        ? 'Good Morning'
+        ? morning
         : hour < 17
-            ? 'Good Afternoon'
-            : 'Good Evening';
+            ? afternoon
+            : evening;
     return name != null && name.isNotEmpty
         ? '$part, ${name.split(' ').first} 👋'
         : '$part 👋';
@@ -591,7 +597,6 @@ class _IssueListCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Category dot
                 Container(
                   width: 8,
                   height: 8,
@@ -614,7 +619,6 @@ class _IssueListCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Status badge
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -655,7 +659,6 @@ class _IssueListCard extends StatelessWidget {
                 ),
               ],
             ),
-            // Progress bar for In Progress items
             if (issue.status == 'In Progress') ...[
               const SizedBox(height: 8),
               Row(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../core/l10n_extension.dart';
 import '../../core/theme.dart';
 import '../../providers/issue_provider.dart';
 import '../../models/issue_model.dart';
@@ -12,17 +13,18 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final issuesAsync = ref.watch(myIssuesStreamProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l10n.notifications),
         actions: [
           TextButton(
             onPressed: () {},
-            child: const Text('Mark all read',
-                style: TextStyle(color: Colors.white70, fontSize: 12)),
+            child: Text(l10n.markAllRead,
+                style: const TextStyle(color: Colors.white70, fontSize: 12)),
           ),
         ],
       ),
@@ -30,13 +32,12 @@ class NotificationsScreen extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppTheme.primary),
         ),
-        error: (e, _) => const Center(
-          child: Text('Failed to load notifications',
-              style: TextStyle(color: AppTheme.textSecondary)),
+        error: (e, _) => Center(
+          child: Text(l10n.failedToLoad,
+              style: const TextStyle(color: AppTheme.textSecondary)),
         ),
         data: (issues) {
-          // Generate notification events from issues
-          final notifications = _buildNotifications(issues);
+          final notifications = _buildNotifications(issues, l10n);
 
           if (notifications.isEmpty) {
             return Center(
@@ -45,7 +46,7 @@ class NotificationsScreen extends ConsumerWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppTheme.accentLight,
                       shape: BoxShape.circle,
                     ),
@@ -53,20 +54,20 @@ class NotificationsScreen extends ConsumerWidget {
                         size: 44, color: AppTheme.primary),
                   ),
                   const SizedBox(height: 16),
-                  const Text('No Notifications Yet',
-                      style: TextStyle(
+                  Text(l10n.noNotifications,
+                      style: const TextStyle(
                           color: AppTheme.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  const Text('Submit a report to start receiving updates',
-                      style: TextStyle(
+                  Text(l10n.submitToReceive,
+                      style: const TextStyle(
                           color: AppTheme.textSecondary, fontSize: 13)),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
                     onPressed: () => context.go('/report'),
                     icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('Report an Issue'),
+                    label: Text(l10n.reportIssue),
                   ),
                 ],
               ),
@@ -82,7 +83,7 @@ class NotificationsScreen extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(
-                    '${notifications.length} updates',
+                    '${notifications.length} ${l10n.updates}',
                     style: const TextStyle(
                         color: AppTheme.textSecondary, fontSize: 12),
                   ),
@@ -97,27 +98,25 @@ class NotificationsScreen extends ConsumerWidget {
     );
   }
 
-  List<_NotifItem> _buildNotifications(List<IssueModel> issues) {
+  List<_NotifItem> _buildNotifications(List<IssueModel> issues, dynamic l10n) {
     final List<_NotifItem> items = [];
 
     for (final issue in issues) {
-      // Submitted notification
       items.add(_NotifItem(
         icon: '📋',
-        title: 'Report Received',
-        body: '${issue.category} report submitted successfully',
+        title: l10n.reportReceived,
+        body: '${issue.category} ${l10n.reported.toLowerCase()}',
         subtitle: issue.title,
         time: issue.createdAt,
         borderColor: AppTheme.primary,
         isRead: true,
       ));
 
-      // Status change notifications
       if (issue.status == 'In Progress') {
         items.add(_NotifItem(
           icon: '🔵',
-          title: 'Status Updated',
-          body: 'Your ${issue.category} report is now In Progress',
+          title: l10n.statusUpdated,
+          body: '${issue.category} — ${l10n.inProgress}',
           subtitle: issue.title,
           time: issue.updatedAt,
           borderColor: AppTheme.inProgressColor,
@@ -126,8 +125,8 @@ class NotificationsScreen extends ConsumerWidget {
       } else if (issue.status == 'Resolved') {
         items.add(_NotifItem(
           icon: '✅',
-          title: 'Issue Resolved',
-          body: '${issue.category} — ${issue.title} has been resolved',
+          title: l10n.issueResolved,
+          body: '${issue.category} — ${issue.title}',
           subtitle: issue.adminNote ?? 'Resolved by municipal authority',
           time: issue.updatedAt,
           borderColor: AppTheme.resolvedColor,
@@ -136,7 +135,6 @@ class NotificationsScreen extends ConsumerWidget {
       }
     }
 
-    // Sort by time descending
     items.sort((a, b) => b.time.compareTo(a.time));
     return items.take(20).toList();
   }
@@ -181,7 +179,6 @@ class _NotifCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left color bar
           Container(
             width: 4,
             height: 80,
@@ -194,13 +191,11 @@ class _NotifCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Icon
           Padding(
             padding: const EdgeInsets.only(top: 14),
             child: Text(notif.icon, style: const TextStyle(fontSize: 22)),
           ),
           const SizedBox(width: 12),
-          // Content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
