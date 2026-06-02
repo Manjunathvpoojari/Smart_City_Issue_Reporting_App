@@ -10,6 +10,7 @@ import '../providers/auth_provider.dart';
 import '../providers/issue_provider.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/admin_issue_detail_screen.dart';
+import '../screens/badges/badges_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/issue_detail/issue_detail_screen.dart';
@@ -50,6 +51,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
           GoRoute(
               path: '/report', builder: (_, __) => const ReportIssueScreen()),
+          GoRoute(
+              path: '/badges', builder: (_, __) => const BadgesScreen()),
         ],
       ),
       GoRoute(

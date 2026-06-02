@@ -32,7 +32,11 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
 
   Future<void> _loadHistory() async {
     final history = await IssueService().getStatusHistory(widget.issue.id);
-    if (mounted) setState(() { _history = history; _loadingHistory = false; });
+    if (mounted)
+      setState(() {
+        _history = history;
+        _loadingHistory = false;
+      });
   }
 
   @override
@@ -55,11 +59,15 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: issue.imageUrl != null
-                  ? CachedNetworkImage(imageUrl: issue.imageUrl!, fit: BoxFit.cover)
+                  ? CachedNetworkImage(
+                      imageUrl: issue.imageUrl!, fit: BoxFit.cover)
                   : Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [statusColor.withOpacity(0.3), AppTheme.surface],
+                          colors: [
+                            statusColor.withOpacity(0.3),
+                            AppTheme.surface
+                          ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
@@ -85,9 +93,12 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(issue.title, style: const TextStyle(
-                          color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.w800,
-                        )),
+                        child: Text(issue.title,
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            )),
                       ),
                       const SizedBox(width: 12),
                       StatusBadge(status: issue.status),
@@ -99,11 +110,14 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                     children: [
                       CategoryChip(category: issue.category),
                       const SizedBox(width: 10),
-                      const Icon(Icons.access_time_rounded, size: 13, color: AppTheme.textMuted),
+                      const Icon(Icons.access_time_rounded,
+                          size: 13, color: AppTheme.textMuted),
                       const SizedBox(width: 4),
                       Text(
-                        DateFormat('dd MMM yyyy, hh:mm a').format(issue.createdAt),
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        DateFormat('dd MMM yyyy, hh:mm a')
+                            .format(issue.createdAt),
+                        style: const TextStyle(
+                            color: AppTheme.textMuted, fontSize: 12),
                       ),
                     ],
                   ),
@@ -112,36 +126,48 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                   // Description
                   _sectionTitle('Description'),
                   const SizedBox(height: 8),
-                  Text(issue.description, style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 14, height: 1.6,
-                  )),
+                  Text(issue.description,
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                        height: 1.6,
+                      )),
                   const SizedBox(height: 20),
 
                   // Admin note
-                  if (issue.adminNote != null && issue.adminNote!.isNotEmpty) ...[
+                  if (issue.adminNote != null &&
+                      issue.adminNote!.isNotEmpty) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppTheme.success.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.success.withOpacity(0.3)),
+                        border: Border.all(
+                            color: AppTheme.success.withOpacity(0.3)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.admin_panel_settings_rounded, color: AppTheme.success, size: 18),
+                          const Icon(Icons.admin_panel_settings_rounded,
+                              color: AppTheme.success, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Admin Note', style: TextStyle(
-                                  color: AppTheme.success, fontWeight: FontWeight.w700, fontSize: 12,
-                                )),
+                                const Text('Admin Note',
+                                    style: TextStyle(
+                                      color: AppTheme.success,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    )),
                                 const SizedBox(height: 4),
-                                Text(issue.adminNote!, style: const TextStyle(
-                                  color: AppTheme.textSecondary, fontSize: 13, height: 1.5,
-                                )),
+                                Text(issue.adminNote!,
+                                    style: const TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 13,
+                                      height: 1.5,
+                                    )),
                               ],
                             ),
                           ),
@@ -160,7 +186,8 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                       height: 180,
                       child: FlutterMap(
                         options: MapOptions(
-                          initialCenter: LatLng(issue.latitude, issue.longitude),
+                          initialCenter:
+                              LatLng(issue.latitude, issue.longitude),
                           initialZoom: 15,
                           interactionOptions: const InteractionOptions(
                             flags: InteractiveFlag.none,
@@ -168,13 +195,15 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                         ),
                         children: [
                           TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                             userAgentPackageName: 'com.smartcity.app',
                           ),
                           MarkerLayer(markers: [
                             Marker(
                               point: LatLng(issue.latitude, issue.longitude),
-                              child: const Icon(Icons.location_pin, color: AppTheme.error, size: 36),
+                              child: const Icon(Icons.location_pin,
+                                  color: AppTheme.error, size: 36),
                             ),
                           ]),
                         ],
@@ -187,9 +216,13 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                   _sectionTitle('Status History'),
                   const SizedBox(height: 12),
                   if (_loadingHistory)
-                    const Center(child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2))
+                    const Center(
+                        child: CircularProgressIndicator(
+                            color: AppTheme.primary, strokeWidth: 2))
                   else if (_history.isEmpty)
-                    const Text('No status updates yet.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13))
+                    const Text('No status updates yet.',
+                        style:
+                            TextStyle(color: AppTheme.textMuted, fontSize: 13))
                   else
                     ..._history.asMap().entries.map((entry) {
                       final h = entry.value;
@@ -200,14 +233,18 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                           Column(
                             children: [
                               Container(
-                                width: 14, height: 14,
+                                width: 14,
+                                height: 14,
                                 decoration: BoxDecoration(
                                   color: AppTheme.statusColor(h.newStatus),
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               if (!isLast)
-                                Container(width: 2, height: 40, color: AppTheme.border),
+                                Container(
+                                    width: 2,
+                                    height: 40,
+                                    color: AppTheme.border),
                             ],
                           ),
                           const SizedBox(width: 14),
@@ -228,7 +265,9 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     'By ${h.adminName ?? 'Admin'} · ${DateFormat('dd MMM, hh:mm a').format(h.changedAt)}',
-                                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                                    style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12),
                                   ),
                                 ],
                               ),
@@ -248,7 +287,10 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
     );
   }
 
-  Widget _sectionTitle(String title) => Text(title, style: const TextStyle(
-    color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700,
-  ));
+  Widget _sectionTitle(String title) => Text(title,
+      style: const TextStyle(
+        color: AppTheme.textPrimary,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+      ));
 }

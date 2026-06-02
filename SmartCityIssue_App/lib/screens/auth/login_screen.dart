@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/l10n_extension.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 
@@ -22,37 +23,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isSignUp = false;
   bool _obscurePassword = true;
 
-  // ── GOOGLE SIGN IN ───────────────────────────────────────────
   Future<void> _signInWithGoogle() async {
     setState(() => _loadingGoogle = true);
     try {
       await ref.read(authServiceProvider).signInWithGoogle();
     } catch (e) {
-      if (mounted) _showError('Google sign in failed: $e');
+      if (mounted) _showError('${context.l10n.signInFailed}: $e');
     } finally {
       if (mounted) setState(() => _loadingGoogle = false);
     }
   }
 
-  // ── EMAIL SIGN IN ────────────────────────────────────────────
   Future<void> _signInWithEmail() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loadingEmail = true);
-
     try {
       if (_isSignUp) {
-        // Register
         await Supabase.instance.client.auth.signUp(
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text.trim(),
         );
         if (mounted) {
-          _showSuccess(
-              'Account created! Please verify your email then sign in.');
+          _showSuccess(context.l10n.accountCreated);
           setState(() => _isSignUp = false);
         }
       } else {
-        // Login
         await Supabase.instance.client.auth.signInWithPassword(
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text.trim(),
@@ -61,23 +56,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on AuthException catch (e) {
       if (mounted) _showError(e.message);
     } catch (e) {
-      if (mounted) _showError('Something went wrong. Try again.');
+      if (mounted) _showError(context.l10n.wrongCredentials);
     } finally {
       if (mounted) setState(() => _loadingEmail = false);
     }
   }
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppTheme.error),
-    );
-  }
+  void _showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: AppTheme.error));
 
-  void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppTheme.success),
-    );
-  }
+  void _showSuccess(String msg) => ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: AppTheme.success));
 
   @override
   void dispose() {
@@ -88,6 +77,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
@@ -105,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   height: 100,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.secondary],
+                      colors: [AppTheme.primary, AppTheme.primaryLight],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -115,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: AppTheme.primary.withOpacity(0.35),
                         blurRadius: 40,
                         offset: const Offset(0, 16),
-                      ),
+                      )
                     ],
                   ),
                   child: const Icon(Icons.location_city_rounded,
@@ -123,49 +114,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                const Text('SmartCity',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    )),
+                Text(l10n.appName,
+                    style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1)),
                 const SizedBox(height: 6),
                 Text(
-                  _isSignUp ? 'Create your account' : 'Welcome back',
+                  _isSignUp ? l10n.createAccount : l10n.signIn,
                   style: const TextStyle(
                       color: AppTheme.textSecondary, fontSize: 15),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
 
-                // ── EMAIL FIELD ───────────────────────────────
+                // Email
                 TextFormField(
                   controller: _emailCtrl,
                   style: const TextStyle(color: AppTheme.textPrimary),
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'you@example.com',
-                    prefixIcon:
-                        Icon(Icons.email_outlined, color: AppTheme.textMuted),
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    hintText: l10n.emailHint,
+                    prefixIcon: const Icon(Icons.email_outlined,
+                        color: AppTheme.textMuted),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
-                      return 'Email is required';
-                    if (!v.contains('@')) return 'Enter a valid email';
+                    if (v == null || v.trim().isEmpty) return l10n.email;
+                    if (!v.contains('@')) return l10n.wrongCredentials;
                     return null;
                   },
                 ),
                 const SizedBox(height: 14),
 
-                // ── PASSWORD FIELD ────────────────────────────
+                // Password
                 TextFormField(
                   controller: _passwordCtrl,
                   style: const TextStyle(color: AppTheme.textPrimary),
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: _isSignUp ? 'Min 6 characters' : 'Your password',
+                    labelText: l10n.password,
+                    hintText:
+                        _isSignUp ? l10n.passwordNewHint : l10n.passwordHint,
                     prefixIcon: const Icon(Icons.lock_outline_rounded,
                         color: AppTheme.textMuted),
                     suffixIcon: IconButton(
@@ -181,24 +171,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
-                      return 'Password is required';
-                    if (_isSignUp && v.length < 6)
-                      return 'Minimum 6 characters';
+                    if (v == null || v.trim().isEmpty) return l10n.password;
+                    if (_isSignUp && v.length < 6) return l10n.passwordNewHint;
                     return null;
                   },
                 ),
                 const SizedBox(height: 20),
 
-                // ── EMAIL SIGN IN / SIGN UP BUTTON ────────────
+                // Email submit button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppTheme.primary, AppTheme.secondary],
-                      ),
+                          colors: [AppTheme.primary, AppTheme.primaryLight]),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: ElevatedButton(
@@ -206,6 +193,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                       ),
@@ -214,65 +203,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
-                            )
-                          : Text(
-                              _isSignUp ? 'Create Account' : 'Sign In',
+                                  color: Colors.white, strokeWidth: 2))
+                          : Text(_isSignUp ? l10n.createAccount : l10n.signIn,
                               style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white)),
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // ── TOGGLE SIGN IN / SIGN UP ──────────────────
+                // Toggle sign up / sign in
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       _isSignUp
-                          ? 'Already have an account? '
-                          : "Don't have an account? ",
+                          ? l10n.alreadyHaveAccount
+                          : l10n.dontHaveAccount,
                       style: const TextStyle(
                           color: AppTheme.textMuted, fontSize: 13),
                     ),
                     GestureDetector(
                       onTap: () => setState(() => _isSignUp = !_isSignUp),
                       child: Text(
-                        _isSignUp ? 'Sign In' : 'Sign Up',
+                        _isSignUp ? l10n.signIn : l10n.createAccount,
                         style: const TextStyle(
-                          color: AppTheme.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
+                            color: AppTheme.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
-                // ── DIVIDER ───────────────────────────────────
-                Row(
-                  children: [
-                    const Expanded(child: Divider(color: AppTheme.border)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text('or',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 13,
-                          )),
-                    ),
-                    const Expanded(child: Divider(color: AppTheme.border)),
-                  ],
-                ),
+                // Divider
+                Row(children: [
+                  const Expanded(child: Divider(color: AppTheme.border)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(l10n.or,
+                        style: const TextStyle(
+                            color: AppTheme.textMuted, fontSize: 13)),
+                  ),
+                  const Expanded(child: Divider(color: AppTheme.border)),
+                ]),
                 const SizedBox(height: 24),
 
-                // ── GOOGLE SIGN IN BUTTON ─────────────────────
+                // Google button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -289,24 +269,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                            child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.g_mobiledata_rounded,
                             size: 28, color: Colors.red),
                     label: Text(
-                      _loadingGoogle ? 'Signing in...' : 'Continue with Google',
+                      _loadingGoogle ? l10n.signingIn : l10n.continueWithGoogle,
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
-                const Text(
-                  'By continuing, you agree to our Terms of Service\nand Privacy Policy',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
+                Text(l10n.termsNotice,
+                    style: const TextStyle(
+                        color: AppTheme.textMuted, fontSize: 12),
+                    textAlign: TextAlign.center),
                 const SizedBox(height: 24),
               ],
             ),
