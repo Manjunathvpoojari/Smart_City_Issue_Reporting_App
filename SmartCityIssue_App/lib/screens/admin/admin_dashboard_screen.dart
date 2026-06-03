@@ -1,15 +1,21 @@
+// ── ADMIN DASHBOARD — Full version with enhanced Analytics tab ─────────────
+// Includes: upvote sorting on Issues tab, priority badges, and rich analytics.
+// Paste this entire file into admin_dashboard_screen.dart.
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../models/issue_model.dart';
 import '../../providers/issue_provider.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/upvote_button.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -26,10 +32,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   late TabController _tabCtrl;
   int _touchedPieIndex = -1;
 
+  // Sort state for Issues tab (most upvoted first by default)
+  bool _sortByUpvotes = true;
+
   @override
   void initState() {
     super.initState();
-    // 4 tabs: Dashboard | Issues | Map | Analytics
     _tabCtrl = TabController(length: 4, vsync: this);
   }
 
@@ -97,14 +105,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           _buildDashboardTab(countsAsync, issuesAsync),
           _buildIssuesTab(filter, issuesAsync),
           _buildMapTab(issuesAsync),
-          _buildAnalyticsTab(countsAsync, issuesAsync),
+          _buildAnalyticsTab(countsAsync, issuesAsync), // ← ENHANCED ANALYTICS
         ],
       ),
     );
   }
 
-  // ── TAB 1: DASHBOARD ──────────────────────────────────────────────────────
-
+  // ======================== TAB 1: DASHBOARD (unchanged) ========================
   Widget _buildDashboardTab(
     AsyncValue<Map<String, int>> countsAsync,
     AsyncValue<List<IssueModel>> issuesAsync,
@@ -125,7 +132,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // ── Header greeting ────────────────────────
+            // Welcome card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -168,7 +175,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             ),
             const SizedBox(height: 16),
 
-            // ── Summary Cards ──────────────────────────
+            // Stats cards
             Row(children: [
               _DashCard(
                   label: 'Total',
@@ -196,7 +203,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             ]),
             const SizedBox(height: 16),
 
-            // ── By Category horizontal bars ────────────
+            // Top upvoted preview
+            if (issues.isNotEmpty) ...[
+              _buildTopUpvotedPreview(issues),
+              const SizedBox(height: 16),
+            ],
+
+            // By category (horizontal bars)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -224,7 +237,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                       Colors.green,
                       Colors.purple,
                       Colors.teal,
-                      Colors.grey,
+                      Colors.grey
                     ];
                     final colorIndex =
                         AppConstants.categories.indexOf(cat) % catColors.length;
@@ -244,7 +257,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
-                              value: ratio.toDouble(),
+                              value: ratio,
                               backgroundColor: AppTheme.border,
                               color: catColors[colorIndex],
                               minHeight: 8,
@@ -265,7 +278,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             ),
             const SizedBox(height: 16),
 
-            // ── Quick Action Buttons ───────────────────
+            // Action buttons
             Row(children: [
               Expanded(
                 child: ElevatedButton.icon(
@@ -273,8 +286,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                   icon: const Icon(Icons.list_alt_rounded, size: 16),
                   label: const Text('View All Issues'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
+                      padding: const EdgeInsets.symmetric(vertical: 14)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -298,12 +310,146 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     );
   }
 
-  // ── TAB 2: ISSUES LIST ────────────────────────────────────────────────────
+  // Dashboard helper: top upvoted preview
+  Widget _buildTopUpvotedPreview(List<IssueModel> issues) {
+    final topIssues = [...issues]
+      ..sort((a, b) => b.upvotes.compareTo(a.upvotes));
+    final top3 = topIssues.where((i) => i.upvotes > 0).take(3).toList();
+    if (top3.isEmpty) return const SizedBox.shrink();
 
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.arrow_upward_rounded,
+                    size: 14, color: Color(0xFF6366F1)),
+              ),
+              const SizedBox(width: 8),
+              const Text('Top Priority Issues',
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  setState(() => _sortByUpvotes = true);
+                  _tabCtrl.animateTo(1);
+                },
+                child: const Text('See all',
+                    style: TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...top3.asMap().entries.map((e) {
+            final rank = e.key + 1;
+            final issue = e.value;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
+                onTap: () =>
+                    context.push('/admin/issue/${issue.id}', extra: issue),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                          color: _rankColor(rank).withOpacity(0.15),
+                          shape: BoxShape.circle),
+                      child: Center(
+                          child: Text('$rank',
+                              style: TextStyle(
+                                  color: _rankColor(rank),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800))),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(issue.title,
+                              style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                          Text(issue.category,
+                              style: const TextStyle(
+                                  color: AppTheme.textMuted, fontSize: 10)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.arrow_upward_rounded,
+                              size: 10, color: Color(0xFF6366F1)),
+                          const SizedBox(width: 3),
+                          Text('${issue.upvotes}',
+                              style: const TextStyle(
+                                  color: Color(0xFF6366F1),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    PriorityBadge(upvotes: issue.upvotes, small: true),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Color _rankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFD97706);
+      case 2:
+        return const Color(0xFF6B7280);
+      case 3:
+        return const Color(0xFFB45309);
+      default:
+        return AppTheme.textMuted;
+    }
+  }
+
+  // ======================== TAB 2: ISSUES (with upvote sort) ========================
   Widget _buildIssuesTab(
       FilterState filter, AsyncValue<List<IssueModel>> issuesAsync) {
     return Column(children: [
-      // Search
+      // Search bar
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         child: TextField(
@@ -329,42 +475,95 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       ),
       const SizedBox(height: 10),
 
-      // Status filter
-      SizedBox(
-        height: 34,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+      // Status filter + sort toggle row
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
           children: [
-            'All',
-            AppConstants.statusPending,
-            AppConstants.statusInProgress,
-            AppConstants.statusResolved
-          ].map((s) {
-            final sel = filter.status == s;
-            final color =
-                s == 'All' ? AppTheme.primary : AppTheme.statusColor(s);
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => ref.read(filterProvider.notifier).setStatus(s),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: sel ? color.withOpacity(0.12) : AppTheme.cardBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: sel ? color : AppTheme.border),
-                  ),
-                  child: Text(s,
-                      style: TextStyle(
-                          color: sel ? color : AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontWeight: sel ? FontWeight.w700 : FontWeight.w400)),
+            // Status chips
+            Expanded(
+              child: SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    'All',
+                    AppConstants.statusPending,
+                    AppConstants.statusInProgress,
+                    AppConstants.statusResolved
+                  ].map((s) {
+                    final sel = filter.status == s;
+                    final color =
+                        s == 'All' ? AppTheme.primary : AppTheme.statusColor(s);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () =>
+                            ref.read(filterProvider.notifier).setStatus(s),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color:
+                                sel ? color.withOpacity(0.12) : AppTheme.cardBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: sel ? color : AppTheme.border),
+                          ),
+                          child: Text(s,
+                              style: TextStyle(
+                                  color: sel ? color : AppTheme.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight:
+                                      sel ? FontWeight.w700 : FontWeight.w400)),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-            );
-          }).toList(),
+            ),
+            const SizedBox(width: 8),
+            // Sort toggle
+            GestureDetector(
+              onTap: () => setState(() => _sortByUpvotes = !_sortByUpvotes),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _sortByUpvotes
+                      ? const Color(0xFF6366F1).withOpacity(0.1)
+                      : AppTheme.cardBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: _sortByUpvotes
+                          ? const Color(0xFF6366F1).withOpacity(0.5)
+                          : AppTheme.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                        _sortByUpvotes
+                            ? Icons.arrow_upward_rounded
+                            : Icons.access_time_rounded,
+                        size: 13,
+                        color: _sortByUpvotes
+                            ? const Color(0xFF6366F1)
+                            : AppTheme.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(_sortByUpvotes ? 'Priority' : 'Newest',
+                        style: TextStyle(
+                            color: _sortByUpvotes
+                                ? const Color(0xFF6366F1)
+                                : AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       const SizedBox(height: 8),
@@ -381,18 +580,22 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           data: (issues) {
             if (issues.isEmpty) {
               return const EmptyState(
-                emoji: '🎉',
-                title: 'No Issues Found',
-                subtitle: 'No issues match your current filters.',
-              );
+                  emoji: '🎉',
+                  title: 'No Issues Found',
+                  subtitle: 'No issues match your current filters.');
+            }
+            final sorted = [...issues];
+            if (_sortByUpvotes) {
+              sorted.sort((a, b) => b.upvotes.compareTo(a.upvotes));
             }
             return ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: issues.length,
-              itemBuilder: (_, i) => IssueCard(
-                issue: issues[i],
-                onTap: () => context.push('/admin/issue/${issues[i].id}',
-                    extra: issues[i]),
+              itemCount: sorted.length,
+              itemBuilder: (_, i) => _AdminIssueCard(
+                issue: sorted[i],
+                rank: _sortByUpvotes ? i + 1 : null,
+                onTap: () => context.push('/admin/issue/${sorted[i].id}',
+                    extra: sorted[i]),
               ),
             );
           },
@@ -401,8 +604,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     ]);
   }
 
-  // ── TAB 3: ISSUE MAP ──────────────────────────────────────────────────────
-
+  // ======================== TAB 3: MAP (unchanged) ========================
   Widget _buildMapTab(AsyncValue<List<IssueModel>> issuesAsync) {
     return issuesAsync.when(
       loading: () => const LoadingWidget(message: 'Loading map...'),
@@ -411,7 +613,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         onRetry: () => ref.invalidate(adminIssuesProvider),
       ),
       data: (issues) => Column(children: [
-        // Legend + count bar
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: const BoxDecoration(
@@ -435,8 +636,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             _MapDot(color: AppTheme.resolvedColor, label: 'Resolved'),
           ]),
         ),
-
-        // Full-screen map
         Expanded(
           child: FlutterMap(
             mapController: _mapController,
@@ -450,14 +649,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.smart_city',
               ),
-              MarkerLayer(
-                markers: issues.map(_buildMarker).toList(),
-              ),
+              MarkerLayer(markers: issues.map(_buildMarker).toList()),
             ],
           ),
         ),
-
-        // Bottom bar
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: const BoxDecoration(
@@ -503,7 +698,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     final color = AppTheme.statusColor(issue.status);
     final bgColor = AppTheme.statusBgColor(issue.status);
     final emoji = AppConstants.categoryIcons[issue.category] ?? '📌';
-
     return Marker(
       point: LatLng(issue.latitude, issue.longitude),
       width: 44,
@@ -529,11 +723,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                 child: Text(emoji, style: const TextStyle(fontSize: 18))),
           ),
           Container(
-            width: 3,
-            height: 10,
-            decoration: BoxDecoration(
-                color: color, borderRadius: BorderRadius.circular(2)),
-          ),
+              width: 3,
+              height: 10,
+              decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(2))),
         ]),
       ),
     );
@@ -544,8 +737,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       context: context,
       backgroundColor: AppTheme.cardBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -553,37 +745,40 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: AppTheme.border,
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
+                child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: AppTheme.border,
+                        borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
             Row(children: [
               Text(AppConstants.categoryIcons[issue.category] ?? '📌',
                   style: const TextStyle(fontSize: 24)),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(issue.title,
-                    style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15)),
-              ),
+                  child: Text(issue.title,
+                      style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15))),
               StatusBadge(status: issue.status),
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              const Icon(Icons.person_outline_rounded,
-                  size: 13, color: AppTheme.textMuted),
+              const Icon(Icons.arrow_upward_rounded,
+                  size: 13, color: Color(0xFF6366F1)),
               const SizedBox(width: 4),
-              Text(issue.reporterName ?? 'Citizen',
-                  style:
-                      const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-              const SizedBox(width: 12),
+              Text('${issue.upvotes} upvotes',
+                  style: const TextStyle(
+                      color: Color(0xFF6366F1),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(width: 10),
+              PriorityBadge(upvotes: issue.upvotes, small: true),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
               const Icon(Icons.category_rounded,
                   size: 13, color: AppTheme.textMuted),
               const SizedBox(width: 4),
@@ -600,23 +795,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             const SizedBox(height: 16),
             Row(children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, size: 16),
-                  label: const Text('Close'),
-                ),
-              ),
+                  child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      label: const Text('Close'))),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.push('/admin/issue/${issue.id}', extra: issue);
-                  },
-                  icon: const Icon(Icons.edit_rounded, size: 16),
-                  label: const Text('Manage'),
-                ),
-              ),
+                  child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.push('/admin/issue/${issue.id}', extra: issue);
+                      },
+                      icon: const Icon(Icons.edit_rounded, size: 16),
+                      label: const Text('Manage'))),
             ]),
             const SizedBox(height: 8),
           ],
@@ -625,8 +816,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     );
   }
 
-  // ── TAB 4: ANALYTICS ──────────────────────────────────────────────────────
-
+  // ======================== TAB 4: ENHANCED ANALYTICS ========================
   Widget _buildAnalyticsTab(
     AsyncValue<Map<String, int>> countsAsync,
     AsyncValue<List<IssueModel>> issuesAsync,
@@ -663,7 +853,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         for (final cat in AppConstants.categories) {
           categoryCounts[cat] = issues.where((i) => i.category == cat).length;
         }
-
         String topCategory = 'None';
         int topCategoryCount = 0;
         categoryCounts.forEach((cat, count) {
@@ -679,13 +868,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           return i.createdAt.year == now.year && i.createdAt.month == now.month;
         }).length;
 
-        // Most affected area
+        // Most affected area (placeholder)
         final mostAffectedArea = issues.isNotEmpty ? 'Shimoga City' : 'No data';
 
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Resolution rate
+            // Resolution rate card
             _ChartCard(
               title: 'Resolution Rate',
               subtitle: '$rate% of all issues resolved',
@@ -705,35 +894,25 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        '$rate%',
-                        style: const TextStyle(
-                          color: AppTheme.resolvedColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                        ),
-                      ),
+                      Text('$rate%',
+                          style: const TextStyle(
+                              color: AppTheme.resolvedColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18)),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 6,
-                    children: [
-                      _ProgDot(
+                  Wrap(spacing: 12, runSpacing: 6, children: [
+                    _ProgDot(
                         color: AppTheme.resolvedColor,
-                        label: 'Resolved: $resolved',
-                      ),
-                      _ProgDot(
+                        label: 'Resolved: $resolved'),
+                    _ProgDot(
                         color: AppTheme.inProgressColor,
-                        label: 'Active: $inProgress',
-                      ),
-                      _ProgDot(
+                        label: 'Active: $inProgress'),
+                    _ProgDot(
                         color: AppTheme.pendingColor,
-                        label: 'Pending: $pending',
-                      ),
-                    ],
-                  ),
+                        label: 'Pending: $pending'),
+                  ]),
                 ],
               ),
             ),
@@ -818,23 +997,20 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                             ),
                             sections: [
                               _pieSection(
-                                value: pending.toDouble(),
-                                color: AppTheme.pendingColor,
-                                title: '$pending',
-                                isTouched: _touchedPieIndex == 0,
-                              ),
+                                  value: pending.toDouble(),
+                                  color: AppTheme.pendingColor,
+                                  title: '$pending',
+                                  isTouched: _touchedPieIndex == 0),
                               _pieSection(
-                                value: inProgress.toDouble(),
-                                color: AppTheme.inProgressColor,
-                                title: '$inProgress',
-                                isTouched: _touchedPieIndex == 1,
-                              ),
+                                  value: inProgress.toDouble(),
+                                  color: AppTheme.inProgressColor,
+                                  title: '$inProgress',
+                                  isTouched: _touchedPieIndex == 1),
                               _pieSection(
-                                value: resolved.toDouble(),
-                                color: AppTheme.resolvedColor,
-                                title: '$resolved',
-                                isTouched: _touchedPieIndex == 2,
-                              ),
+                                  value: resolved.toDouble(),
+                                  color: AppTheme.resolvedColor,
+                                  title: '$resolved',
+                                  isTouched: _touchedPieIndex == 2),
                             ],
                             centerSpaceRadius: 42,
                             sectionsSpace: 3,
@@ -848,22 +1024,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _PieLeg(
-                              color: AppTheme.pendingColor,
-                              label: 'Pending',
-                              value: '$pending',
-                            ),
+                                color: AppTheme.pendingColor,
+                                label: 'Pending',
+                                value: '$pending'),
                             const SizedBox(height: 12),
                             _PieLeg(
-                              color: AppTheme.inProgressColor,
-                              label: 'In Progress',
-                              value: '$inProgress',
-                            ),
+                                color: AppTheme.inProgressColor,
+                                label: 'In Progress',
+                                value: '$inProgress'),
                             const SizedBox(height: 12),
                             _PieLeg(
-                              color: AppTheme.resolvedColor,
-                              label: 'Resolved',
-                              value: '$resolved',
-                            ),
+                                color: AppTheme.resolvedColor,
+                                label: 'Resolved',
+                                value: '$resolved'),
                           ],
                         ),
                       ),
@@ -873,7 +1046,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               ),
             if (total > 0) const SizedBox(height: 16),
 
-            // Status Breakdown
+            // Status Breakdown (percentage bars)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -884,41 +1057,35 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Status Breakdown',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
+                  const Text('Status Breakdown',
+                      style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
                   const SizedBox(height: 14),
                   _StatusBreakdownRow(
-                    label: 'Resolved',
-                    count: resolved,
-                    total: total,
-                    color: AppTheme.resolvedColor,
-                  ),
+                      label: 'Resolved',
+                      count: resolved,
+                      total: total,
+                      color: AppTheme.resolvedColor),
                   const SizedBox(height: 10),
                   _StatusBreakdownRow(
-                    label: 'In Progress',
-                    count: inProgress,
-                    total: total,
-                    color: AppTheme.inProgressColor,
-                  ),
+                      label: 'In Progress',
+                      count: inProgress,
+                      total: total,
+                      color: AppTheme.inProgressColor),
                   const SizedBox(height: 10),
                   _StatusBreakdownRow(
-                    label: 'Pending',
-                    count: pending,
-                    total: total,
-                    color: AppTheme.pendingColor,
-                  ),
+                      label: 'Pending',
+                      count: pending,
+                      total: total,
+                      color: AppTheme.pendingColor),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // Weekly Trend
+            // Weekly Trend (Line Chart)
             if (issues.isNotEmpty)
               _ChartCard(
                 title: 'Weekly Trend',
@@ -930,10 +1097,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
-                        getDrawingHorizontalLine: (_) => FlLine(
-                          color: AppTheme.border,
-                          strokeWidth: 1,
-                        ),
+                        getDrawingHorizontalLine: (_) =>
+                            FlLine(color: AppTheme.border, strokeWidth: 1),
                       ),
                       titlesData: FlTitlesData(
                         bottomTitles: AxisTitles(
@@ -951,13 +1116,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                                 'Sun'
                               ];
                               if (value.toInt() < days.length) {
-                                return Text(
-                                  days[value.toInt()],
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 10,
-                                  ),
-                                );
+                                return Text(days[value.toInt()],
+                                    style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 10));
                               }
                               return const SizedBox.shrink();
                             },
@@ -969,24 +1131,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                             reservedSize: 28,
                             getTitlesWidget: (value, meta) {
                               if (value == value.roundToDouble()) {
-                                return Text(
-                                  value.toInt().toString(),
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 10,
-                                  ),
-                                );
+                                return Text(value.toInt().toString(),
+                                    style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 10));
                               }
                               return const SizedBox.shrink();
                             },
                           ),
                         ),
                         topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
+                            sideTitles: SideTitles(showTitles: false)),
                         rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
+                            sideTitles: SideTitles(showTitles: false)),
                       ),
                       borderData: FlBorderData(show: false),
                       lineBarsData: [
@@ -1006,9 +1163,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                             ),
                           ),
                           belowBarData: BarAreaData(
-                            show: true,
-                            color: AppTheme.primary.withOpacity(0.08),
-                          ),
+                              show: true,
+                              color: AppTheme.primary.withOpacity(0.08)),
                         ),
                       ],
                       minX: 0,
@@ -1020,7 +1176,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               ),
             if (issues.isNotEmpty) const SizedBox(height: 16),
 
-            // Category Performance
+            // Category Performance (resolution progress per category)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1031,36 +1187,26 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Category Performance',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
+                  const Text('Category Performance',
+                      style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
                   const SizedBox(height: 14),
                   ...AppConstants.categories.map((cat) {
                     final catIssues =
                         issues.where((i) => i.category == cat).toList();
                     final catTotal = catIssues.length;
-                    if (catTotal == 0) {
-                      return const SizedBox.shrink();
-                    }
-
+                    if (catTotal == 0) return const SizedBox.shrink();
                     final catResolved =
                         catIssues.where((i) => i.status == 'Resolved').length;
                     final catRate = catResolved / catTotal;
                     final icon = AppConstants.categoryIcons[cat] ?? '📌';
-
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         children: [
-                          Text(
-                            icon,
-                            style: const TextStyle(fontSize: 16),
-                          ),
+                          Text(icon, style: const TextStyle(fontSize: 16)),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Column(
@@ -1069,22 +1215,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        cat,
+                                        child: Text(cat,
+                                            style: const TextStyle(
+                                                color: AppTheme.textPrimary,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600))),
+                                    Text('$catResolved/$catTotal resolved',
                                         style: const TextStyle(
-                                          color: AppTheme.textPrimary,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      '$catResolved/$catTotal resolved',
-                                      style: const TextStyle(
-                                        color: AppTheme.textMuted,
-                                        fontSize: 10,
-                                      ),
-                                    ),
+                                            color: AppTheme.textMuted,
+                                            fontSize: 10)),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
@@ -1103,7 +1242,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                         ],
                       ),
                     );
-                  }),
+                  }).toList(),
                 ],
               ),
             ),
@@ -1114,8 +1253,25 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // Helper: generate spots for last 7 days (Monday = 0 ... Sunday = 6)
+  List<FlSpot> _weeklySpots(List<IssueModel> issues) {
+    final now = DateTime.now();
+    // Find the most recent Monday
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final spots = List.generate(7, (index) {
+      final day = startOfWeek.add(Duration(days: index));
+      final count = issues
+          .where((issue) =>
+              issue.createdAt.year == day.year &&
+              issue.createdAt.month == day.month &&
+              issue.createdAt.day == day.day)
+          .length;
+      return FlSpot(index.toDouble(), count.toDouble());
+    });
+    return spots;
+  }
 
+  // Helper: pie section
   PieChartSectionData _pieSection({
     required double value,
     required Color color,
@@ -1139,163 +1295,248 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     }
     return max == 0 ? 1 : max;
   }
-
-  List<FlSpot> _weeklySpots(List<IssueModel> issues) {
-    final now = DateTime.now();
-    return List.generate(7, (i) {
-      final day = now.subtract(Duration(days: 6 - i));
-      final count = issues.where((issue) {
-        final d = issue.createdAt;
-        return d.year == day.year && d.month == day.month && d.day == day.day;
-      }).length;
-      return FlSpot(i.toDouble(), count.toDouble());
-    });
-  }
 }
 
-// ── Small Reusable Widgets ────────────────────────────────────────────────────
-
-class _StatRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
-  final Color valueColor;
-  final bool showDivider;
-
-  const _StatRow({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-    required this.valueColor,
-    required this.showDivider,
-  });
-
-  @override
-  Widget build(BuildContext context) => Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: valueColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (showDivider)
-            const Divider(
-              height: 1,
-              indent: 16,
-              endIndent: 16,
-            ),
-        ],
-      );
-}
-
-class _StatusBreakdownRow extends StatelessWidget {
-  final String label;
-  final int count;
-  final int total;
-  final Color color;
-
-  const _StatusBreakdownRow({
-    required this.label,
-    required this.count,
-    required this.total,
-    required this.color,
-  });
+// ======================== Admin Issue Card (with rank & upvotes) ========================
+class _AdminIssueCard extends StatelessWidget {
+  final IssueModel issue;
+  final int? rank;
+  final VoidCallback onTap;
+  const _AdminIssueCard({required this.issue, required this.onTap, this.rank});
 
   @override
   Widget build(BuildContext context) {
-    final pct = total > 0 ? count / total : 0.0;
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '$count',
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-            Text(
-              '  (${(pct * 100).toStringAsFixed(0)}%)',
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 11,
-              ),
-            ),
+    final statusColor = AppTheme.statusColor(issue.status);
+    final statusBg = AppTheme.statusBgColor(issue.status);
+    final catIcon = AppConstants.categoryIcons[issue.category] ?? '📌';
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: issue.upvotes >= 10
+                ? const Color(0xFF6366F1).withOpacity(0.3)
+                : AppTheme.border,
+            width: issue.upvotes >= 10 ? 1.5 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2))
           ],
         ),
-        const SizedBox(height: 5),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: pct,
-            backgroundColor: AppTheme.border,
-            color: color,
-            minHeight: 6,
+        child: Padding(
+          padding: const EdgeInsets.all(13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (rank != null && issue.upvotes > 0) ...[
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                          color: _rankBg(rank!), shape: BoxShape.circle),
+                      child: Center(
+                          child: Text('$rank',
+                              style: TextStyle(
+                                  color: _rankFg(rank!),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800))),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                      child: Text('$catIcon  ${issue.title}',
+                          style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis)),
+                  const SizedBox(width: 8),
+                  Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                          color: statusBg,
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Text(issue.status,
+                          style: TextStyle(
+                              color: statusColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700))),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(Icons.person_outline_rounded,
+                      size: 11, color: AppTheme.textMuted),
+                  const SizedBox(width: 3),
+                  Text(issue.reporterName ?? 'Citizen',
+                      style: const TextStyle(
+                          color: AppTheme.textMuted, fontSize: 11)),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.access_time_rounded,
+                      size: 11, color: AppTheme.textMuted),
+                  const SizedBox(width: 3),
+                  Text(timeago.format(issue.createdAt),
+                      style: const TextStyle(
+                          color: AppTheme.textMuted, fontSize: 11)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.arrow_upward_rounded,
+                      size: 13, color: Color(0xFF6366F1)),
+                  const SizedBox(width: 4),
+                  Text(
+                      '${issue.upvotes} upvote${issue.upvotes == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                          color: Color(0xFF6366F1),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(width: 8),
+                  PriorityBadge(upvotes: issue.upvotes, small: true),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppTheme.textMuted, size: 18),
+                ],
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Color _rankBg(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFFEF3C7);
+      case 2:
+        return const Color(0xFFF3F4F6);
+      case 3:
+        return const Color(0xFFFEF3C7).withOpacity(0.6);
+      default:
+        return AppTheme.border;
+    }
+  }
+
+  Color _rankFg(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFD97706);
+      case 2:
+        return const Color(0xFF6B7280);
+      case 3:
+        return const Color(0xFFB45309);
+      default:
+        return AppTheme.textMuted;
+    }
+  }
+}
+
+// ======================== Analytics Helper Widgets ========================
+class _StatRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label, value;
+  final Color valueColor;
+  final bool showDivider;
+  const _StatRow(
+      {required this.icon,
+      required this.iconColor,
+      required this.label,
+      required this.value,
+      required this.valueColor,
+      required this.showDivider});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.1),
+                      shape: BoxShape.circle),
+                  child: Icon(icon, size: 16, color: iconColor)),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Text(label,
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13))),
+              Text(value,
+                  style: TextStyle(
+                      color: valueColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14)),
+            ],
+          ),
+        ),
+        if (showDivider) const Divider(height: 1, color: AppTheme.border),
       ],
     );
   }
 }
 
+class _StatusBreakdownRow extends StatelessWidget {
+  final String label;
+  final int count, total;
+  final Color color;
+  const _StatusBreakdownRow(
+      {required this.label,
+      required this.count,
+      required this.total,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = total > 0 ? (count / total) : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(label,
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
+            const Spacer(),
+            Text('$count (${(percentage * 100).toStringAsFixed(0)}%)',
+                style: TextStyle(
+                    color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+                value: percentage,
+                backgroundColor: AppTheme.border,
+                color: color,
+                minHeight: 5)),
+      ],
+    );
+  }
+}
+
+// ======================== Legacy Helper Widgets (unchanged) ========================
 class _DashCard extends StatelessWidget {
   final String label, value;
   final IconData icon;
@@ -1322,11 +1563,10 @@ class _DashCard extends StatelessWidget {
           ),
           child: Column(children: [
             Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                  color: color.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(icon, size: 15, color: color),
-            ),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                    color: color.withOpacity(0.1), shape: BoxShape.circle),
+                child: Icon(icon, size: 15, color: color)),
             const SizedBox(height: 6),
             Text(value,
                 style: TextStyle(
@@ -1347,32 +1587,21 @@ class _ChartCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.border),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 4,
-                offset: const Offset(0, 2))
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14)),
-            const SizedBox(height: 2),
-            Text(subtitle,
-                style:
-                    const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-            const SizedBox(height: 14),
-            child,
-          ],
-        ),
+            color: AppTheme.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.border)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title,
+              style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14)),
+          const SizedBox(height: 2),
+          Text(subtitle,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+          const SizedBox(height: 14),
+          child,
+        ]),
       );
 }
 
@@ -1404,19 +1633,17 @@ class _ProgDot extends StatelessWidget {
   final String label;
   const _ProgDot({required this.color, required this.label});
   @override
-  Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-          Text(label,
-              style:
-                  const TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
-        ],
-      );
+  Widget build(BuildContext context) =>
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 4),
+        Text(label,
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
+      ]);
 }
 
 class _MapDot extends StatelessWidget {
