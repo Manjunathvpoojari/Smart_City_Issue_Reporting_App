@@ -1,13 +1,19 @@
+// ── ISSUE CARD with Upvote support ───────────────────────────────────────────
+// Replace the existing IssueCard in app_widgets.dart with this version.
+// Only the IssueCard widget changes — all other widgets stay identical.
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../core/constants.dart';
 import '../core/theme.dart';
 import '../models/issue_model.dart';
+import '../widgets/upvote_button.dart'; // ← new import
 
-// ── STATUS BADGE ──────────────────────────────────────────────────────────────
+// ── STATUS BADGE (unchanged) ──────────────────────────────────────────────────
 
 class StatusBadge extends StatelessWidget {
   final String status;
@@ -51,7 +57,7 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-// ── CATEGORY CHIP ─────────────────────────────────────────────────────────────
+// ── CATEGORY CHIP (unchanged) ─────────────────────────────────────────────────
 
 class CategoryChip extends StatelessWidget {
   final String category;
@@ -88,15 +94,15 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
-// ── ISSUE CARD ────────────────────────────────────────────────────────────────
+// ── ISSUE CARD ── UPDATED with upvote + priority badge ────────────────────────
 
-class IssueCard extends StatelessWidget {
+class IssueCard extends ConsumerWidget {
   final IssueModel issue;
   final VoidCallback onTap;
   const IssueCard({super.key, required this.issue, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -116,6 +122,7 @@ class IssueCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Image ──────────────────────────────────────────
             if (issue.imageUrl != null)
               ClipRRect(
                 borderRadius:
@@ -129,11 +136,13 @@ class IssueCard extends StatelessWidget {
                   errorWidget: (_, __, ___) => _placeholder(),
                 ),
               ),
+
             Padding(
               padding: const EdgeInsets.all(13),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Title row ────────────────────────────────
                   Row(
                     children: [
                       Expanded(
@@ -150,12 +159,16 @@ class IssueCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 5),
+
+                  // ── Description ──────────────────────────────
                   Text(issue.description,
                       style: const TextStyle(
                           color: AppTheme.textSecondary, fontSize: 12),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8),
+
+                  // ── Bottom row: category + time ───────────────
                   Row(
                     children: [
                       CategoryChip(category: issue.category, small: true),
@@ -168,7 +181,8 @@ class IssueCard extends StatelessWidget {
                               color: AppTheme.textMuted, fontSize: 11)),
                     ],
                   ),
-                  // Progress bar for In Progress
+
+                  // ── Progress bar (In Progress only) ──────────
                   if (issue.status == 'In Progress') ...[
                     const SizedBox(height: 8),
                     ClipRRect(
@@ -181,6 +195,28 @@ class IssueCard extends StatelessWidget {
                       ),
                     ),
                   ],
+
+                  // ── Upvote row ── NEW ─────────────────────────
+                  const SizedBox(height: 10),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      // Compact upvote button (stops tap propagation)
+                      GestureDetector(
+                        // Prevent card onTap from firing when upvoting
+                        onTap: () {},
+                        behavior: HitTestBehavior.opaque,
+                        child: UpvoteButton(
+                          issue: issue,
+                          compact: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Priority badge — only shows if upvotes ≥ 1
+                      PriorityBadge(upvotes: issue.upvotes, small: true),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -206,7 +242,7 @@ class IssueCard extends StatelessWidget {
       );
 }
 
-// ── LOADING WIDGET ────────────────────────────────────────────────────────────
+// ── LOADING WIDGET (unchanged) ────────────────────────────────────────────────
 
 class LoadingWidget extends StatelessWidget {
   final String? message;
@@ -232,7 +268,7 @@ class LoadingWidget extends StatelessWidget {
   }
 }
 
-// ── EMPTY STATE ───────────────────────────────────────────────────────────────
+// ── EMPTY STATE (unchanged) ───────────────────────────────────────────────────
 
 class EmptyState extends StatelessWidget {
   final String emoji, title, subtitle;
@@ -274,7 +310,7 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-// ── ERROR RETRY ───────────────────────────────────────────────────────────────
+// ── ERROR RETRY (unchanged) ───────────────────────────────────────────────────
 
 class ErrorRetryWidget extends StatelessWidget {
   final String message;
@@ -290,7 +326,7 @@ class ErrorRetryWidget extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.errorLight,
               shape: BoxShape.circle,
             ),
@@ -311,7 +347,7 @@ class ErrorRetryWidget extends StatelessWidget {
   }
 }
 
-// ── GRADIENT BUTTON ───────────────────────────────────────────────────────────
+// ── GRADIENT BUTTON (unchanged) ───────────────────────────────────────────────
 
 class GradientButton extends StatelessWidget {
   final String label;
