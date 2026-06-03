@@ -11,6 +11,7 @@ import '../../models/issue_model.dart';
 import '../../models/status_history_model.dart';
 import '../../services/issue_service.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/upvote_button.dart'; // ← new import
 
 class IssueDetailScreen extends ConsumerStatefulWidget {
   final IssueModel issue;
@@ -32,11 +33,12 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
 
   Future<void> _loadHistory() async {
     final history = await IssueService().getStatusHistory(widget.issue.id);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _history = history;
         _loadingHistory = false;
       });
+    }
   }
 
   @override
@@ -48,7 +50,7 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
       backgroundColor: AppTheme.background,
       body: CustomScrollView(
         slivers: [
-          // Hero image app bar
+          // ── Hero image app bar ─────────────────────────────
           SliverAppBar(
             expandedHeight: issue.imageUrl != null ? 260 : 120,
             pinned: true,
@@ -88,7 +90,7 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title + status
+                  // ── Title + status ─────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -121,9 +123,55 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+
+                  // ── UPVOTE SECTION ── NEW ──────────────────
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: Row(
+                      children: [
+                        // Left: upvote stats
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Community Priority',
+                                style: TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${issue.upvotes} citizen${issue.upvotes == 1 ? '' : 's'} flagged this as important',
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (issue.upvotes >= 1) ...[
+                                const SizedBox(height: 6),
+                                PriorityBadge(upvotes: issue.upvotes),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Right: upvote button
+                        UpvoteButton(issue: issue, compact: false),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 20),
 
-                  // Description
+                  // ── Description ────────────────────────────
                   _sectionTitle('Description'),
                   const SizedBox(height: 8),
                   Text(issue.description,
@@ -134,7 +182,7 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                       )),
                   const SizedBox(height: 20),
 
-                  // Admin note
+                  // ── Admin note ─────────────────────────────
                   if (issue.adminNote != null &&
                       issue.adminNote!.isNotEmpty) ...[
                     Container(
@@ -177,7 +225,7 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                     const SizedBox(height: 20),
                   ],
 
-                  // Map
+                  // ── Map ────────────────────────────────────
                   _sectionTitle('Location'),
                   const SizedBox(height: 10),
                   ClipRRect(
@@ -212,7 +260,7 @@ class _IssueDetailScreenState extends ConsumerState<IssueDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Status timeline
+                  // ── Status History ─────────────────────────
                   _sectionTitle('Status History'),
                   const SizedBox(height: 12),
                   if (_loadingHistory)

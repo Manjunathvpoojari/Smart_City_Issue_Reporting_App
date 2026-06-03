@@ -11,16 +11,19 @@ import '../../models/issue_model.dart';
 import '../../providers/issue_provider.dart';
 import '../../services/issue_service.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/upvote_button.dart'; // ← new import
 
 class AdminIssueDetailScreen extends ConsumerStatefulWidget {
   final IssueModel issue;
   const AdminIssueDetailScreen({super.key, required this.issue});
 
   @override
-  ConsumerState<AdminIssueDetailScreen> createState() => _AdminIssueDetailScreenState();
+  ConsumerState<AdminIssueDetailScreen> createState() =>
+      _AdminIssueDetailScreenState();
 }
 
-class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen> {
+class _AdminIssueDetailScreenState
+    extends ConsumerState<AdminIssueDetailScreen> {
   late String _selectedStatus;
   final _noteCtrl = TextEditingController();
   bool _saving = false;
@@ -39,9 +42,12 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
   }
 
   Future<void> _saveStatus() async {
-    if (_selectedStatus == widget.issue.status && _noteCtrl.text.trim() == (widget.issue.adminNote ?? '')) {
+    if (_selectedStatus == widget.issue.status &&
+        _noteCtrl.text.trim() == (widget.issue.adminNote ?? '')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No changes to save'), backgroundColor: AppTheme.warning),
+        const SnackBar(
+            content: Text('No changes to save'),
+            backgroundColor: AppTheme.warning),
       );
       return;
     }
@@ -60,13 +66,15 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
         ref.invalidate(adminIssuesProvider);
         ref.invalidate(issueCountsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Issue updated successfully'),
+          const SnackBar(
+              content: Text('✅ Issue updated successfully'),
               backgroundColor: AppTheme.success),
         );
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update. Try again.'),
+          const SnackBar(
+              content: Text('Failed to update. Try again.'),
               backgroundColor: AppTheme.error),
         );
       }
@@ -85,18 +93,25 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
           TextButton.icon(
             onPressed: _saving ? null : _saveStatus,
             icon: _saving
-                ? const SizedBox(width: 16, height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_rounded, size: 18),
             label: const Text('Save'),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Reporter info
+          // ── PRIORITY SIGNAL CARD ── NEW ──────────────────
+          _buildPriorityCard(issue),
+          const SizedBox(height: 16),
+
+          // ── Reporter info ─────────────────────────────────
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -107,16 +122,22 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
             child: Row(
               children: [
                 Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.secondary]),
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: [AppTheme.primary, AppTheme.secondary]),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
                       (issue.reporterName?.isNotEmpty == true)
-                          ? issue.reporterName![0].toUpperCase() : '?',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                          ? issue.reporterName![0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18),
                     ),
                   ),
                 ),
@@ -125,25 +146,27 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(issue.reporterName ?? 'Unknown', style: const TextStyle(
-                        color: AppTheme.textPrimary, fontWeight: FontWeight.w700,
-                      )),
-                      Text(issue.reporterEmail ?? '', style: const TextStyle(
-                        color: AppTheme.textMuted, fontSize: 12,
-                      )),
+                      Text(issue.reporterName ?? 'Unknown',
+                          style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w700)),
+                      Text(issue.reporterEmail ?? '',
+                          style: const TextStyle(
+                              color: AppTheme.textMuted, fontSize: 12)),
                     ],
                   ),
                 ),
                 Text(
                   DateFormat('dd MMM yyyy').format(issue.createdAt),
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  style:
+                      const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
-          // Issue image
+          // ── Issue image ───────────────────────────────────
           if (issue.imageUrl != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
@@ -156,15 +179,18 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
             ),
           const SizedBox(height: 16),
 
-          // Title + category
-          Text(issue.title, style: const TextStyle(
-            color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w800,
-          )),
+          // ── Title + category ──────────────────────────────
+          Text(issue.title,
+              style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           Row(children: [
             CategoryChip(category: issue.category),
             const SizedBox(width: 8),
-            const Icon(Icons.access_time_rounded, size: 13, color: AppTheme.textMuted),
+            const Icon(Icons.access_time_rounded,
+                size: 13, color: AppTheme.textMuted),
             const SizedBox(width: 4),
             Text(
               DateFormat('dd MMM yyyy, hh:mm a').format(issue.createdAt),
@@ -172,12 +198,12 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
             ),
           ]),
           const SizedBox(height: 12),
-          Text(issue.description, style: const TextStyle(
-            color: AppTheme.textSecondary, fontSize: 14, height: 1.6,
-          )),
+          Text(issue.description,
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 14, height: 1.6)),
           const SizedBox(height: 20),
 
-          // Mini map
+          // ── Mini map ──────────────────────────────────────
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
             child: SizedBox(
@@ -186,17 +212,20 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
                 options: MapOptions(
                   initialCenter: LatLng(issue.latitude, issue.longitude),
                   initialZoom: 15,
-                  interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+                  interactionOptions:
+                      const InteractionOptions(flags: InteractiveFlag.none),
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.smartcity.app',
                   ),
                   MarkerLayer(markers: [
                     Marker(
                       point: LatLng(issue.latitude, issue.longitude),
-                      child: const Icon(Icons.location_pin, color: AppTheme.error, size: 36),
+                      child: const Icon(Icons.location_pin,
+                          color: AppTheme.error, size: 36),
                     ),
                   ]),
                 ],
@@ -205,48 +234,57 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
           ),
           const SizedBox(height: 24),
 
-          // Status update section
-          const Text('Update Status', style: TextStyle(
-            color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700,
-          )),
+          // ── Status update ─────────────────────────────────
+          const Text('Update Status',
+              style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
 
-          // Status radio buttons
-          ...[ AppConstants.statusPending, AppConstants.statusInProgress, AppConstants.statusResolved]
-              .map((status) {
+          ...[
+            AppConstants.statusPending,
+            AppConstants.statusInProgress,
+            AppConstants.statusResolved
+          ].map((status) {
             final color = AppTheme.statusColor(status);
             final selected = _selectedStatus == status;
             return GestureDetector(
               onTap: () => setState(() => _selectedStatus = status),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: selected ? color.withOpacity(0.1) : AppTheme.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: selected ? color : AppTheme.border, width: selected ? 2 : 1),
+                  border: Border.all(
+                      color: selected ? color : AppTheme.border,
+                      width: selected ? 2 : 1),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                      color: selected ? color : AppTheme.textMuted, size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    StatusBadge(status: status),
-                    if (issue.status == status) ...[
-                      const SizedBox(width: 8),
-                      const Text('(current)', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-                    ],
+                child: Row(children: [
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_off_rounded,
+                    color: selected ? color : AppTheme.textMuted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  StatusBadge(status: status),
+                  if (issue.status == status) ...[
+                    const SizedBox(width: 8),
+                    const Text('(current)',
+                        style:
+                            TextStyle(color: AppTheme.textMuted, fontSize: 11)),
                   ],
-                ),
+                ]),
               ),
             );
           }),
-
           const SizedBox(height: 16),
 
-          // Resolution note
+          // ── Resolution note ───────────────────────────────
           TextField(
             controller: _noteCtrl,
             style: const TextStyle(color: AppTheme.textPrimary),
@@ -271,6 +309,101 @@ class _AdminIssueDetailScreenState extends ConsumerState<AdminIssueDetailScreen>
             isLoading: _saving,
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ── Priority card shown at top of admin detail ─────────────────────────────
+
+  Widget _buildPriorityCard(IssueModel issue) {
+    final upvotes = issue.upvotes;
+    const indigo = Color(0xFF6366F1);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        // Intensity of background scales with urgency
+        color: upvotes >= 10 ? const Color(0xFFEEF2FF) : AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: upvotes >= 10 ? indigo.withOpacity(0.4) : AppTheme.border,
+          width: upvotes >= 10 ? 1.5 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Left: icon + upvote stat
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: indigo.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.arrow_upward_rounded, color: indigo, size: 18),
+                const SizedBox(height: 2),
+                Text(
+                  '$upvotes',
+                  style: const TextStyle(
+                    color: indigo,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          // Middle: label + description
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Community Priority Signal',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  upvotes == 0
+                      ? 'No community votes yet'
+                      : '$upvotes citizen${upvotes == 1 ? '' : 's'} flagged this as urgent',
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                if (upvotes > 0) ...[
+                  const SizedBox(height: 6),
+                  // Urgency bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      // Cap visual at 20 upvotes = 100%
+                      value: (upvotes / 20).clamp(0.0, 1.0),
+                      backgroundColor: indigo.withOpacity(0.1),
+                      color: indigo,
+                      minHeight: 5,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Right: priority badge
+          if (upvotes > 0) PriorityBadge(upvotes: upvotes, small: false),
         ],
       ),
     );

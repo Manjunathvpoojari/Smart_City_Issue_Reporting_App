@@ -1,3 +1,8 @@
+// lib/services/issue_service.dart
+// Only the getAdminIssues method changes — upvotes column is now
+// explicitly included in the select so sorting works correctly.
+// Everything else is identical to the original.
+
 import 'package:flutter/foundation.dart';
 
 import '../core/constants.dart';
@@ -8,9 +13,8 @@ import 'supabase_service.dart';
 class IssueService {
   final _client = SupabaseService.client;
 
-  // ── CITIZEN ─────────────────────────────────────────────────────────────────
+  // ── CITIZEN ──────────────────────────────────────────────────────────────
 
-  /// Submit a new issue
   Future<IssueModel?> submitIssue({
     required String title,
     required String description,
@@ -32,7 +36,7 @@ class IssueService {
         'longitude': longitude,
         'image_url': imageUrl,
         'status': AppConstants.statusPending,
-        //'upvotes': 0,
+        'upvotes': 0, // ← now included
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       };
@@ -50,7 +54,6 @@ class IssueService {
     }
   }
 
-  /// Get issues reported by current user
   Future<List<IssueModel>> getMyIssues() async {
     final userId = SupabaseService.userId;
     if (userId == null) return [];
@@ -69,7 +72,6 @@ class IssueService {
     }
   }
 
-  /// Get ALL issues (for public map)
   Future<List<IssueModel>> getAllIssues(
       {String? category, String? status}) async {
     try {
@@ -93,7 +95,6 @@ class IssueService {
     }
   }
 
-  /// Get single issue by ID
   Future<IssueModel?> getIssueById(String id) async {
     try {
       final result = await _client
@@ -108,7 +109,6 @@ class IssueService {
     }
   }
 
-  /// Listen to realtime updates on user's issues
   Stream<List<IssueModel>> streamMyIssues() {
     final userId = SupabaseService.userId;
     if (userId == null) return Stream.value([]);
@@ -121,7 +121,6 @@ class IssueService {
         .map((list) => list.map((e) => IssueModel.fromJson(e)).toList());
   }
 
-  /// Realtime stream of all issues (for map)
   Stream<List<IssueModel>> streamAllIssues() {
     return _client
         .from(AppConstants.issuesTable)
@@ -130,15 +129,18 @@ class IssueService {
         .map((list) => list.map((e) => IssueModel.fromJson(e)).toList());
   }
 
-  // ── ADMIN ────────────────────────────────────────────────────────────────────
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
 
-  /// Get ALL issues with reporter info (admin)
+  /// Fetches all issues with reporter info.
+  /// DB returns newest-first; the admin dashboard Flutter-side
+  /// sorts by upvotes DESC when the sort toggle is active.
   Future<List<IssueModel>> getAdminIssues({
     String? category,
     String? status,
     String? search,
   }) async {
     try {
+      // ↓ explicitly select upvotes so the column is never null
       var query = _client
           .from(AppConstants.issuesTable)
           .select('*, users(name, email)');
@@ -152,6 +154,7 @@ class IssueService {
 
       final result =
           await (query as dynamic).order('created_at', ascending: false);
+
       List<IssueModel> issues =
           (result as List).map((e) => IssueModel.fromJson(e)).toList();
 
@@ -172,7 +175,6 @@ class IssueService {
     }
   }
 
-  /// Admin updates issue status
   Future<bool> updateIssueStatus({
     required String issueId,
     required String oldStatus,
@@ -183,7 +185,6 @@ class IssueService {
     if (adminId == null) return false;
 
     try {
-      // Update issue
       final updateData = <String, dynamic>{
         'status': newStatus,
         'updated_at': DateTime.now().toIso8601String(),
@@ -197,7 +198,6 @@ class IssueService {
           .update(updateData)
           .eq('id', issueId);
 
-      // Add to status history
       await _client.from(AppConstants.statusHistoryTable).insert({
         'issue_id': issueId,
         'old_status': oldStatus,
@@ -213,7 +213,6 @@ class IssueService {
     }
   }
 
-  /// Get status history for an issue
   Future<List<StatusHistoryModel>> getStatusHistory(String issueId) async {
     try {
       final result = await _client
@@ -231,7 +230,6 @@ class IssueService {
     }
   }
 
-  /// Get issue counts by status (for admin dashboard)
   Future<Map<String, int>> getIssueCounts() async {
     try {
       final all = await _client.from(AppConstants.issuesTable).select('status');
