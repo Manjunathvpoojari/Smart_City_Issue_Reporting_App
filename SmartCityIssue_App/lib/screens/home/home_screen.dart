@@ -52,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return CustomScrollView(
             slivers: [
-              // ── App Bar ─────────────────────────────────────────────
+              // ── App Bar ───────────────────────────────
               SliverAppBar(
                 pinned: true,
                 backgroundColor: AppTheme.primary,
@@ -78,8 +78,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _greeting(profile?.name, l10n.goodMorning,
-                                        l10n.goodAfternoon, l10n.goodEvening),
+                                    _greeting(
+                                      profile?.name,
+                                      l10n.goodMorning,
+                                      l10n.goodAfternoon,
+                                      l10n.goodEvening,
+                                    ),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -87,17 +91,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on_rounded,
-                                          size: 12, color: Colors.white70),
-                                      const SizedBox(width: 3),
-                                      Text(l10n.shimoga,
-                                          style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 12)),
-                                    ],
-                                  ),
+                                  Row(children: [
+                                    const Icon(Icons.location_on_rounded,
+                                        size: 12, color: Colors.white70),
+                                    const SizedBox(width: 3),
+                                    Text(l10n.shimoga,
+                                        style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12)),
+                                  ]),
                                 ],
                               ),
                             ),
@@ -113,20 +115,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     border: Border.all(
                                         color: Colors.white.withOpacity(0.4)),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                          Icons.admin_panel_settings_rounded,
-                                          size: 14,
-                                          color: Colors.white),
-                                      const SizedBox(width: 4),
-                                      Text(l10n.admin,
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700)),
-                                    ],
-                                  ),
+                                  child: Row(children: [
+                                    const Icon(
+                                        Icons.admin_panel_settings_rounded,
+                                        size: 14,
+                                        color: Colors.white),
+                                    const SizedBox(width: 4),
+                                    Text(l10n.admin,
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700)),
+                                  ]),
                                 ),
                               ),
                           ],
@@ -146,44 +146,82 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Stats Row ──────────────────────────────────────
+                    // ── Stats Row ──────────────────────
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       child: Row(
                         children: [
                           _StatCard(
-                            label: l10n.total,
-                            value: '${issues.length}',
-                            icon: Icons.location_on_rounded,
-                            color: AppTheme.primary,
-                          ),
+                              label: l10n.total,
+                              value: '${issues.length}',
+                              icon: Icons.location_on_rounded,
+                              color: AppTheme.primary),
                           const SizedBox(width: 10),
                           _StatCard(
-                            label: l10n.pending,
-                            value: '$pending',
-                            icon: Icons.hourglass_empty_rounded,
-                            color: AppTheme.pendingColor,
-                          ),
+                              label: l10n.pending,
+                              value: '$pending',
+                              icon: Icons.hourglass_empty_rounded,
+                              color: AppTheme.pendingColor),
                           const SizedBox(width: 10),
                           _StatCard(
-                            label: l10n.active,
-                            value: '$inProgress',
-                            icon: Icons.autorenew_rounded,
-                            color: AppTheme.inProgressColor,
-                          ),
+                              label: l10n.active,
+                              value: '$inProgress',
+                              icon: Icons.autorenew_rounded,
+                              color: AppTheme.inProgressColor),
                           const SizedBox(width: 10),
                           _StatCard(
-                            label: l10n.resolved,
-                            value: '$resolved',
-                            icon: Icons.check_circle_rounded,
-                            color: AppTheme.resolvedColor,
-                          ),
+                              label: l10n.resolved,
+                              value: '$resolved',
+                              icon: Icons.check_circle_rounded,
+                              color: AppTheme.resolvedColor),
                         ],
                       ),
                     ),
 
-                    // ── Category Filter ────────────────────────────────
-                    const SizedBox(height: 16),
+                    // ── Vote CTA banner ─────────────────
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: GestureDetector(
+                        onTap: () => context.go('/city-issues'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF6366F1).withOpacity(0.1),
+                                const Color(0xFF6366F1).withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF6366F1).withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(children: [
+                            const Icon(Icons.arrow_upward_rounded,
+                                color: Color(0xFF6366F1), size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Help prioritise — browse & vote on city issues',
+                                style: const TextStyle(
+                                  color: Color(0xFF6366F1),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: Color(0xFF6366F1), size: 16),
+                          ]),
+                        ),
+                      ),
+                    ),
+
+                    // ── Category Filter ─────────────────
+                    const SizedBox(height: 14),
                     SizedBox(
                       height: 36,
                       child: ListView(
@@ -230,36 +268,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
-                    // ── Map / List Toggle ──────────────────────────────
+                    // ── Map / List Toggle ───────────────
                     const SizedBox(height: 14),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Text(l10n.cityMap,
-                              style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700)),
-                          const Spacer(),
-                          _ToggleButton(
-                            label: l10n.map,
-                            icon: Icons.map_rounded,
-                            active: _showMap,
-                            onTap: () => setState(() => _showMap = true),
-                          ),
-                          const SizedBox(width: 6),
-                          _ToggleButton(
-                            label: 'List',
-                            icon: Icons.list_rounded,
-                            active: !_showMap,
-                            onTap: () => setState(() => _showMap = false),
-                          ),
-                        ],
-                      ),
+                      child: Row(children: [
+                        Text(l10n.cityMap,
+                            style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700)),
+                        const Spacer(),
+                        _ToggleButton(
+                          label: l10n.map,
+                          icon: Icons.map_rounded,
+                          active: _showMap,
+                          onTap: () => setState(() => _showMap = true),
+                        ),
+                        const SizedBox(width: 6),
+                        _ToggleButton(
+                          label: 'List',
+                          icon: Icons.list_rounded,
+                          active: !_showMap,
+                          onTap: () => setState(() => _showMap = false),
+                        ),
+                      ]),
                     ),
 
-                    // ── Map ───────────────────────────────────────────
+                    // ── Map ────────────────────────────
                     const SizedBox(height: 10),
                     if (_showMap)
                       Padding(
@@ -298,51 +334,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
 
-                    // ── Map Legend ─────────────────────────────────────
+                    // ── Legend ─────────────────────────
                     if (_showMap) ...[
                       const SizedBox(height: 10),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            _LegendDot(
-                                color: AppTheme.pendingColor,
-                                label: l10n.pending),
-                            const SizedBox(width: 14),
-                            _LegendDot(
-                                color: AppTheme.inProgressColor,
-                                label: l10n.inProgress),
-                            const SizedBox(width: 14),
-                            _LegendDot(
-                                color: AppTheme.resolvedColor,
-                                label: l10n.resolved),
-                          ],
-                        ),
+                        child: Row(children: [
+                          _LegendDot(
+                              color: AppTheme.pendingColor,
+                              label: l10n.pending),
+                          const SizedBox(width: 14),
+                          _LegendDot(
+                              color: AppTheme.inProgressColor,
+                              label: l10n.inProgress),
+                          const SizedBox(width: 14),
+                          _LegendDot(
+                              color: AppTheme.resolvedColor,
+                              label: l10n.resolved),
+                        ]),
                       ),
                     ],
 
-                    // ── Recent Issues ──────────────────────────────────
+                    // ── Recent Issues ───────────────────
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Text(l10n.recentIssues,
+                      child: Row(children: [
+                        Text(l10n.recentIssues,
+                            style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700)),
+                        const Spacer(),
+                        // ← now goes to city-issues for voting
+                        GestureDetector(
+                          onTap: () => context.go('/city-issues'),
+                          child: Text(l10n.viewAll,
                               style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700)),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => context.go('/my-reports'),
-                            child: Text(l10n.viewAll,
-                                style: const TextStyle(
-                                    color: AppTheme.primary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                        ],
-                      ),
+                                  color: AppTheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ]),
                     ),
                     const SizedBox(height: 10),
                     if (filtered.isEmpty)
@@ -393,33 +426,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       height: 54,
       child: GestureDetector(
         onTap: () => context.push('/issue/${issue.id}', extra: issue),
-        child: Column(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppTheme.statusBgColor(issue.status),
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                      color: color.withOpacity(0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3)),
-                ],
-              ),
-              child: Center(
-                  child: Text(emoji, style: const TextStyle(fontSize: 18))),
+        child: Column(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.statusBgColor(issue.status),
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 2.5),
+              boxShadow: [
+                BoxShadow(
+                    color: color.withOpacity(0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3)),
+              ],
             ),
-            Container(
-              width: 3,
-              height: 10,
-              decoration: BoxDecoration(
-                  color: color, borderRadius: BorderRadius.circular(2)),
-            ),
-          ],
-        ),
+            child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 18))),
+          ),
+          Container(
+            width: 3,
+            height: 10,
+            decoration: BoxDecoration(
+                color: color, borderRadius: BorderRadius.circular(2)),
+          ),
+        ]),
       ),
     );
   }
@@ -438,19 +469,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// ── Stat Card ──────────────────────────────────────────────────────────────────
+// ── Stat Card ─────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final String label, value;
   final IconData icon;
   final Color color;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  const _StatCard(
+      {required this.label,
+      required this.value,
+      required this.icon,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -463,49 +492,40 @@ class _StatCard extends StatelessWidget {
           border: Border.all(color: AppTheme.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2)),
           ],
         ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 14, color: color),
-            ),
-            const SizedBox(height: 5),
-            Text(value,
-                style: TextStyle(
-                    color: color, fontSize: 18, fontWeight: FontWeight.w800)),
-            Text(label,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 9)),
-          ],
-        ),
+        child: Column(children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(icon, size: 14, color: color),
+          ),
+          const SizedBox(height: 5),
+          Text(value,
+              style: TextStyle(
+                  color: color, fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(label,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 9)),
+        ]),
       ),
     );
   }
 }
-
-// ── Toggle Button ──────────────────────────────────────────────────────────────
 
 class _ToggleButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool active;
   final VoidCallback onTap;
-
-  const _ToggleButton({
-    required this.label,
-    required this.icon,
-    required this.active,
-    required this.onTap,
-  });
+  const _ToggleButton(
+      {required this.label,
+      required this.icon,
+      required this.active,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -519,25 +539,20 @@ class _ToggleButton extends StatelessWidget {
           border:
               Border.all(color: active ? AppTheme.primary : AppTheme.border),
         ),
-        child: Row(
-          children: [
-            Icon(icon,
-                size: 13,
-                color: active ? Colors.white : AppTheme.textSecondary),
-            const SizedBox(width: 4),
-            Text(label,
-                style: TextStyle(
-                    color: active ? Colors.white : AppTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600)),
-          ],
-        ),
+        child: Row(children: [
+          Icon(icon,
+              size: 13, color: active ? Colors.white : AppTheme.textSecondary),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  color: active ? Colors.white : AppTheme.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600)),
+        ]),
       ),
     );
   }
 }
-
-// ── Map Legend Dot ─────────────────────────────────────────────────────────────
 
 class _LegendDot extends StatelessWidget {
   final Color color;
@@ -546,28 +561,21 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
+    return Row(children: [
+      Container(
           width: 10,
           height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
-        Text(label,
-            style:
-                const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-      ],
-    );
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+      const SizedBox(width: 5),
+      Text(label,
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+    ]);
   }
 }
-
-// ── Issue List Card ────────────────────────────────────────────────────────────
 
 class _IssueListCard extends StatelessWidget {
   final IssueModel issue;
   final VoidCallback onTap;
-
   const _IssueListCard({required this.issue, required this.onTap});
 
   @override
@@ -586,102 +594,90 @@ class _IssueListCard extends StatelessWidget {
           border: Border.all(color: AppTheme.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
+            Row(children: [
+              Container(
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '$catIcon  ${issue.title}',
+                      color: statusColor, shape: BoxShape.circle)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('$catIcon  ${issue.title}',
                     style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700),
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    issue.status,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                    color: statusBg, borderRadius: BorderRadius.circular(20)),
+                child: Text(issue.status,
                     style: TextStyle(
-                      color: statusColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700)),
+              ),
+            ]),
             const SizedBox(height: 5),
-            Row(
-              children: [
-                const Icon(Icons.access_time_rounded,
-                    size: 11, color: AppTheme.textMuted),
-                const SizedBox(width: 3),
-                Text(
-                  timeago.format(issue.createdAt),
+            Row(children: [
+              const Icon(Icons.access_time_rounded,
+                  size: 11, color: AppTheme.textMuted),
+              const SizedBox(width: 3),
+              Text(timeago.format(issue.createdAt),
                   style:
-                      const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                ),
+                      const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+              const SizedBox(width: 10),
+              const Icon(Icons.category_rounded,
+                  size: 11, color: AppTheme.textMuted),
+              const SizedBox(width: 3),
+              Text(issue.category,
+                  style:
+                      const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+              // Show upvote count inline
+              if (issue.upvotes > 0) ...[
                 const SizedBox(width: 10),
-                const Icon(Icons.category_rounded,
-                    size: 11, color: AppTheme.textMuted),
-                const SizedBox(width: 3),
-                Text(
-                  issue.category,
-                  style:
-                      const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                ),
+                const Icon(Icons.arrow_upward_rounded,
+                    size: 11, color: Color(0xFF6366F1)),
+                const SizedBox(width: 2),
+                Text('${issue.upvotes}',
+                    style: const TextStyle(
+                        color: Color(0xFF6366F1),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700)),
               ],
-            ),
+            ]),
             if (issue.status == 'In Progress') ...[
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
+              Row(children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
                         value: 0.6,
                         backgroundColor: AppTheme.border,
                         color: AppTheme.inProgressColor,
-                        minHeight: 4,
-                      ),
-                    ),
+                        minHeight: 4),
                   ),
-                  const SizedBox(width: 8),
-                  const Text('60%',
-                      style: TextStyle(
-                          color: AppTheme.inProgressColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700)),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                const Text('60%',
+                    style: TextStyle(
+                        color: AppTheme.inProgressColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700)),
+              ]),
             ],
           ],
         ),

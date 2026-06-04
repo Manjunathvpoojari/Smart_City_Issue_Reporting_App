@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/theme.dart'; // ← ADD THIS
+import '../core/theme.dart';
 
 import '../models/issue_model.dart';
 // ignore: unused_import
@@ -12,6 +12,7 @@ import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/admin_issue_detail_screen.dart';
 import '../screens/badges/badges_screen.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/city_issues/city_issues_screen.dart'; // ← new
 import '../screens/home/home_screen.dart';
 import '../screens/issue_detail/issue_detail_screen.dart';
 import '../screens/my_reports/my_reports_screen.dart';
@@ -44,6 +45,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
           GoRoute(
+              path: '/city-issues', // ← new route
+              builder: (_, __) => const CityIssuesScreen()),
+          GoRoute(
               path: '/my-reports', builder: (_, __) => const MyReportsScreen()),
           GoRoute(
               path: '/notifications',
@@ -51,8 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
           GoRoute(
               path: '/report', builder: (_, __) => const ReportIssueScreen()),
-          GoRoute(
-              path: '/badges', builder: (_, __) => const BadgesScreen()),
+          GoRoute(path: '/badges', builder: (_, __) => const BadgesScreen()),
         ],
       ),
       GoRoute(
@@ -78,7 +81,7 @@ class _AuthNotifier extends ChangeNotifier {
   }
 }
 
-// ── Main Shell with 4-tab Bottom Nav ──────────────────────────────────────────
+// ── Main Shell with 5-tab Bottom Nav ──────────────────────────────────────
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -91,11 +94,17 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
   int _selectedIndex = 0;
 
-  final _tabs = ['/home', '/my-reports', '/notifications', '/profile'];
+  // 5 tabs: Map | City Issues | My Reports | Alerts | Profile
+  final _tabs = [
+    '/home',
+    '/city-issues',
+    '/my-reports',
+    '/notifications',
+    '/profile',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    // Count unread notifications (issues with status changes)
     final issues = ref.watch(myIssuesStreamProvider).valueOrNull ?? [];
     final hasUnread = issues.any((i) => i.status == 'In Progress');
 
@@ -126,26 +135,33 @@ class _MainShellState extends ConsumerState<MainShell> {
                   onTap: () => _onTap(0),
                 ),
                 _NavItem(
-                  icon: Icons.list_alt_outlined,
-                  activeIcon: Icons.list_alt,
-                  label: 'Reports',
+                  icon: Icons.location_city_outlined,
+                  activeIcon: Icons.location_city,
+                  label: 'Issues', // ← new tab
                   active: _selectedIndex == 1,
                   onTap: () => _onTap(1),
+                ),
+                _NavItem(
+                  icon: Icons.list_alt_outlined,
+                  activeIcon: Icons.list_alt,
+                  label: 'Mine',
+                  active: _selectedIndex == 2,
+                  onTap: () => _onTap(2),
                 ),
                 _NavItem(
                   icon: Icons.notifications_none_rounded,
                   activeIcon: Icons.notifications_rounded,
                   label: 'Alerts',
-                  active: _selectedIndex == 2,
+                  active: _selectedIndex == 3,
                   badge: hasUnread,
-                  onTap: () => _onTap(2),
+                  onTap: () => _onTap(3),
                 ),
                 _NavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
                   label: 'Profile',
-                  active: _selectedIndex == 3,
-                  onTap: () => _onTap(3),
+                  active: _selectedIndex == 4,
+                  onTap: () => _onTap(4),
                 ),
               ],
             ),
@@ -160,6 +176,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     context.go(_tabs[index]);
   }
 }
+
+// ── Nav Item (unchanged) ───────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon, activeIcon;
