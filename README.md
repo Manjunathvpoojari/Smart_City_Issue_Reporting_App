@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/images/logo.png" alt="SmartCity Logo" width="96" height="96">
+<img src="SmartCityIssue_App/assets/images/logo.png" alt="SmartCity Logo" width="96" height="96">
 
 # SmartCity
 
