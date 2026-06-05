@@ -12,7 +12,9 @@ class AuthService {
   Future<void> signInWithGoogle() async {
     await _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? null : 'io.supabase.smart_city://login-callback',
+      redirectTo: kIsWeb
+          ? null
+          : 'https://zkvsezohhoelfdkgoqzr.supabase.co/auth/v1/callback',
     );
   }
 
