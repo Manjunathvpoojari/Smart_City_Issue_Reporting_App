@@ -14,7 +14,7 @@ class AuthService {
       OAuthProvider.google,
       redirectTo: kIsWeb
           ? null
-          : 'io.supabase.smart_city://login-callback',
+          : 'io.supabase.smartcity://login-callback',
     );
   }
 
