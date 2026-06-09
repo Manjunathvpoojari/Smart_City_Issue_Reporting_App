@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/theme.dart';
+import 'dart:async';
 
 import '../models/issue_model.dart';
 // ignore: unused_import
@@ -74,10 +75,20 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 class _AuthNotifier extends ChangeNotifier {
+  late final StreamSubscription<AuthState> _subscription;
+
   _AuthNotifier(Ref ref) {
-    Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+    _subscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      debugPrint('Auth state changed: ${data.event}');
       notifyListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }
 
