@@ -173,7 +173,7 @@ SmartCityIssue_App/
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 SmartCity follows a **feature-first layered architecture** with unidirectional data flow powered by Riverpod.
 
@@ -327,7 +327,7 @@ flutter run
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 Run the following in Supabase SQL Editor:
 
