@@ -78,7 +78,7 @@ All screenshots are stored in the [`Synopsis/SS/`](Synopsis/SS/) folder at the r
 | <img src="Synopsis/SS/city_issues.jpg" width="180"/> | <img src="Synopsis/SS/notifications.jpg" width="180"/> | <img src="Synopsis/SS/profile.jpg" width="180"/> |
 
 | Kannada | Hindi |
-|:---:|:---:|:---:|
+|:---:|:---:|
 | <img src="Synopsis/SS/kannada.jpg" width="180"/> | <img src="Synopsis/SS/hindi.jpg" width="180"/> | 
 
 ### Badges & Gamification
