@@ -101,100 +101,6 @@ All screenshots are stored in the [`Synopsis/SS/`](Synopsis/SS/) folder at the r
 
 ---
 
-## 🗂️ Repository Structure
-
-```
-smartcity/                          ← repo root
-├── SmartCityIssue_App/             ← Flutter application
-│   ├── .env                        ← you create this (not committed)
-│   ├── pubspec.yaml
-│   ├── android/
-│   │   └── app/
-│   │       └── google-services.json
-│   ├── assets/
-│   │   ├── images/logo.png
-│   │   └── animations/splash.json
-│   └── lib/
-│       └── ...                     ← see Project Structure below
-│
-├── Synopsis/                       ← project documentation & media
-│   └── SS/                         ← app screenshots (all screens)
-│       ├── splash.jpg
-│       ├── login.jpg
-│       ├── home_map.jpg
-│       ├── report_issue.jpg
-│       ├── my_reports.jpg
-│       ├── issue_detail.jpg
-│       ├── city_issues.jpg
-│       ├── notifications.jpg
-│       ├── profile.jpg
-│       ├── badges.jpg
-│       ├── badge_detail.jpg
-│       ├── badge_unlock.jpg
-│       ├── admin_dashboard.jpg
-│       ├── admin_issues.jpg
-│       ├── admin_map.jpg
-│       ├── admin_analytics.jpg
-│       └── admin_issue_detail.jpg
-│
-└── README.md
-```
-
----
-
-## 🏗️ Architecture
-
-SmartCity follows a **feature-first layered architecture** with unidirectional data flow powered by Riverpod.
-
-```
-┌─────────────────────────────────────────────────────┐
-│                    Presentation Layer                │
-│         Screens  ·  Widgets  ·  Dialogs             │
-└──────────────────────┬──────────────────────────────┘
-                       │  watches / reads
-┌──────────────────────▼──────────────────────────────┐
-│                    State Layer                       │
-│   Riverpod Providers  ·  Notifiers  ·  Streams      │
-└──────────────────────┬──────────────────────────────┘
-                       │  calls
-┌──────────────────────▼──────────────────────────────┐
-│                    Service Layer                     │
-│   AuthService · IssueService · UpvoteService        │
-│   StorageService · LocationService · Notification   │
-└──────────────────────┬──────────────────────────────┘
-                       │  queries
-┌──────────────────────▼──────────────────────────────┐
-│                   Data Layer                         │
-│         Supabase PostgreSQL  ·  Realtime             │
-│         Supabase Storage  ·  Firebase FCM            │
-└─────────────────────────────────────────────────────┘
-```
-
-### Tech Stack
-
-| Layer | Technology | Purpose |
-|---|---|---|
-| **UI Framework** | Flutter 3.x + Dart 3 | Cross-platform mobile |
-| **State Management** | Riverpod 2.x | Providers, streams, computed state |
-| **Backend / DB** | Supabase (PostgreSQL) | Auth, database, realtime, storage |
-| **Authentication** | Supabase Auth | Email/password + Google OAuth |
-| **Realtime** | Supabase Realtime | Live issue stream updates |
-| **Storage** | Supabase Storage | Issue photo uploads |
-| **Maps** | OpenStreetMap + flutter_map | Free, no billing, no API key |
-| **GPS** | geolocator + geocoding | Location + reverse geocoding |
-| **Push Notifications** | Firebase Cloud Messaging | Status update alerts |
-| **Charts** | fl_chart | Pie chart, line chart |
-| **Animations** | Lottie + AnimationController | Splash, badge celebrations |
-| **Image Processing** | flutter_image_compress | Client-side compression before upload |
-| **Localisation** | Flutter gen-l10n (ARB) | EN / HI / KN |
-| **Typography** | Google Fonts — DM Sans | Consistent brand font |
-| **Config** | flutter_dotenv | Secrets via `.env` |
-| **Navigation** | GoRouter | Declarative routing with auth redirect |
-
-> **Zero paid services.** Supabase free tier (500MB DB, 1GB storage, 50K reads/day) and Firebase Spark plan (FCM is always free) are sufficient for production demos.
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -263,6 +169,102 @@ SmartCityIssue_App/
         └── admin/
             ├── admin_dashboard_screen.dart
             └── admin_issue_detail_screen.dart
+```
+
+---
+
+## 🏗️ Architecture
+
+SmartCity follows a **feature-first layered architecture** with unidirectional data flow powered by Riverpod.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Presentation Layer                │
+│         Screens  ·  Widgets  ·  Dialogs             │
+└──────────────────────┬──────────────────────────────┘
+                       │  watches / reads
+┌──────────────────────▼──────────────────────────────┐
+│                    State Layer                       │
+│   Riverpod Providers  ·  Notifiers  ·  Streams      │
+└──────────────────────┬──────────────────────────────┘
+                       │  calls
+┌──────────────────────▼──────────────────────────────┐
+│                    Service Layer                     │
+│   AuthService · IssueService · UpvoteService        │
+│   StorageService · LocationService · Notification   │
+└──────────────────────┬──────────────────────────────┘
+                       │  queries
+┌──────────────────────▼──────────────────────────────┐
+│                   Data Layer                         │
+│         Supabase PostgreSQL  ·  Realtime             │
+│         Supabase Storage  ·  Firebase FCM            │
+└─────────────────────────────────────────────────────┘
+```
+
+### Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **UI Framework** | Flutter 3.x + Dart 3 | Cross-platform mobile |
+| **State Management** | Riverpod 2.x | Providers, streams, computed state |
+| **Backend / DB** | Supabase (PostgreSQL) | Auth, database, realtime, storage |
+| **Authentication** | Supabase Auth | Email/password + Google OAuth |
+| **Realtime** | Supabase Realtime | Live issue stream updates |
+| **Storage** | Supabase Storage | Issue photo uploads |
+| **Maps** | OpenStreetMap + flutter_map | Free, no billing, no API key |
+| **GPS** | geolocator + geocoding | Location + reverse geocoding |
+| **Push Notifications** | Firebase Cloud Messaging | Status update alerts |
+| **Charts** | fl_chart | Pie chart, line chart |
+| **Animations** | Lottie + AnimationController | Splash, badge celebrations |
+| **Image Processing** | flutter_image_compress | Client-side compression before upload |
+| **Localisation** | Flutter gen-l10n (ARB) | EN / HI / KN |
+| **Typography** | Google Fonts — DM Sans | Consistent brand font |
+| **Config** | flutter_dotenv | Secrets via `.env` |
+| **Navigation** | GoRouter | Declarative routing with auth redirect |
+
+> **Zero paid services.** Supabase free tier (500MB DB, 1GB storage, 50K reads/day) and Firebase Spark plan (FCM is always free) are sufficient for production demos.
+
+---
+
+## 🗂️ Repository Structure
+
+```
+smartcity/                          ← repo root
+├── SmartCityIssue_App/             ← Flutter application
+│   ├── .env                        ← you create this (not committed)
+│   ├── pubspec.yaml
+│   ├── android/
+│   │   └── app/
+│   │       └── google-services.json
+│   ├── assets/
+│   │   ├── images/logo.png
+│   │   └── animations/splash.json
+│   └── lib/
+│       └── ...                     ← see Project Structure above
+│
+├── Synopsis/                       ← project documentation & media
+│   └── SS/                         ← app screenshots (all screens)
+│       ├── splash.jpg
+│       ├── login.jpg
+│       ├── home_map.jpg
+│       ├── report_issue.jpg
+│       ├── my_reports.jpg
+│       ├── issue_detail.jpg
+│       ├── city_issues.jpg
+│       ├── notifications.jpg
+│       ├── profile.jpg
+|       ├── kannada.jpg
+|       ├── hindi.jpg
+│       ├── badges.jpg
+│       ├── badge_detail.jpg
+│       ├── badge_unlock.jpg
+│       ├── admin_dashboard.jpg
+│       ├── admin_issues.jpg
+│       ├── admin_map.jpg
+│       ├── admin_analytics.jpg
+│       └── admin_issue_detail.jpg
+│
+└── README.md
 ```
 
 ---
