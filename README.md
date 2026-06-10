@@ -15,7 +15,7 @@
 [![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-Maps-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white)](https://www.openstreetmap.org)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-[Features](#-features) · [Screenshots](#-screenshots) · [Architecture](#-architecture) · [Getting Started](#-getting-started) · [Database](#-database-schema) · [API](#-supabase-rpc-functions) · [Contributing](#-contributing)
+[Features](#-features) · [Screenshots](#-screenshots) · [Architecture](#architecture) · [Getting Started](#-getting-started) · [Database](#database-schema) · [API](#-supabase-rpc-functions) · [Contributing](#-contributing)
 
 </div>
 
