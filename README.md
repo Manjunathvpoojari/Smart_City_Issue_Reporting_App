@@ -59,6 +59,89 @@ Built with a zero-cost infrastructure stack (Supabase + OpenStreetMap + Firebase
 
 ---
 
+## 📸 Screenshots
+
+All screenshots are stored in the [`Synopsis/SS/`](Synopsis/SS/) folder at the root of this repository.
+
+### Citizen Screens
+
+| Splash | Login | Home Map |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/splash.jpg" width="180"/> | <img src="Synopsis/SS/login.jpg" width="180"/> | <img src="Synopsis/SS/home_map.jpg" width="180"/> |
+
+| Report Issue | My Reports | Issue Detail |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/report_issue.jpg" width="180"/> | <img src="Synopsis/SS/my_reports.jpg" width="180"/> | <img src="Synopsis/SS/issue_detail.jpg" width="180"/> |
+
+| City Issues (Voting) | Notifications | Profile |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/city_issues.jpg" width="180"/> | <img src="Synopsis/SS/notifications.jpg" width="180"/> | <img src="Synopsis/SS/profile.jpg" width="180"/> |
+
+| Kannada | Hindi |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/kannada.jpg" width="180"/> | <img src="Synopsis/SS/hindi.jpg" width="180"/> | 
+
+### Badges & Gamification
+
+| Badges Screen | Badge Detail | Badge Unlock Celebration |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/badges.jpg" width="180"/> | <img src="Synopsis/SS/badge_detail.jpg" width="180"/> | <img src="Synopsis/SS/badge_unlock.jpg" width="180"/> |
+
+### Admin Screens
+
+| Admin Dashboard | Issue Management | Admin Map |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/admin_dashboard.jpg" width="180"/> | <img src="Synopsis/SS/admin_issues.jpg" width="180"/> | <img src="Synopsis/SS/admin_map.jpg" width="180"/> |
+
+| Analytics | Admin Issue Detail | |
+|:---:|:---:|:---:|
+| <img src="Synopsis/SS/admin_analytics.jpg" width="180"/> | <img src="Synopsis/SS/admin_issue_detail.jpg" width="180"/> | |
+
+> Screenshots are located at `Synopsis/SS/` in the repo root. If you are adding new screenshots, follow the existing filename convention and update the table above.
+
+---
+
+## 🗂️ Repository Structure
+
+```
+smartcity/                          ← repo root
+├── SmartCityIssue_App/             ← Flutter application
+│   ├── .env                        ← you create this (not committed)
+│   ├── pubspec.yaml
+│   ├── android/
+│   │   └── app/
+│   │       └── google-services.json
+│   ├── assets/
+│   │   ├── images/logo.png
+│   │   └── animations/splash.json
+│   └── lib/
+│       └── ...                     ← see Project Structure below
+│
+├── Synopsis/                       ← project documentation & media
+│   └── SS/                         ← app screenshots (all screens)
+│       ├── splash.jpg
+│       ├── login.jpg
+│       ├── home_map.jpg
+│       ├── report_issue.jpg
+│       ├── my_reports.jpg
+│       ├── issue_detail.jpg
+│       ├── city_issues.jpg
+│       ├── notifications.jpg
+│       ├── profile.jpg
+│       ├── badges.jpg
+│       ├── badge_detail.jpg
+│       ├── badge_unlock.jpg
+│       ├── admin_dashboard.jpg
+│       ├── admin_issues.jpg
+│       ├── admin_map.jpg
+│       ├── admin_analytics.jpg
+│       └── admin_issue_detail.jpg
+│
+└── README.md
+```
+
+---
+
 ## 🏗️ Architecture
 
 SmartCity follows a **feature-first layered architecture** with unidirectional data flow powered by Riverpod.
@@ -115,7 +198,7 @@ SmartCity follows a **feature-first layered architecture** with unidirectional d
 ## 📁 Project Structure
 
 ```
-smartcity/
+SmartCityIssue_App/
 ├── .env                          # ← you create this (not committed)
 ├── pubspec.yaml
 ├── android/
@@ -203,7 +286,7 @@ cd smartcity
 
 ### 2 — Create your `.env` file
 
-Create a `.env` file in the project root. **Never commit this file.**
+Create a `.env` file inside `SmartCityIssue_App/`. **Never commit this file.**
 
 ```env
 SUPABASE_URL=https://your-project-id.supabase.co
@@ -230,11 +313,12 @@ Open **SQL Editor** in your Supabase dashboard and run `supabase_setup.sql` (see
 
 1. [Firebase Console](https://console.firebase.google.com) → New Project → Add Android App
 2. Package name: `com.smartcity.app`
-3. Download `google-services.json` → place in `android/app/`
+3. Download `google-services.json` → place in `SmartCityIssue_App/android/app/`
 
 ### 6 — Install dependencies and run
 
 ```bash
+cd SmartCityIssue_App
 flutter pub get
 flutter run
 ```
@@ -382,7 +466,7 @@ The app ships with three fully translated locales:
 | हिंदी Hindi | `hi` | 100% |
 | ಕನ್ನಡ Kannada | `kn` | 100% |
 
-Translation files live in `lib/l10n/` as ARB files. Generated Dart classes are in both `lib/l10n/` and `lib/generated/`.
+Translation files live in `SmartCityIssue_App/lib/l10n/` as ARB files. Generated Dart classes are in both `lib/l10n/` and `lib/generated/`.
 
 To add a new language:
 1. Create `lib/l10n/app_<code>.arb` modelled on `app_en.arb`
@@ -462,6 +546,7 @@ Deploy with `supabase functions deploy notify-citizen`.
 
 **Debug build**
 ```bash
+cd SmartCityIssue_App
 flutter run
 ```
 
