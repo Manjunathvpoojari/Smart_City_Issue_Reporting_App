@@ -161,14 +161,77 @@ create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- ── 9. MAKE A USER ADMIN (run manually after signup) ────────
--- Replace 'user@example.com' with the admin's email
--- update public.users set role = 'admin' where email = 'user@example.com';
+-- | upvote ___
 
--- ── DONE ─────────────────────────────────────────────────────
--- Your database is ready!
--- Next steps:
--- 1. Go to Supabase → Authentication → Providers → Enable Google
--- 2. Add your Google OAuth credentials
--- 3. Set redirect URL: io.supabase.smartcity://login-callback
--- 4. Run the app and test sign in
+
+CREATE TABLE IF NOT EXISTS public.issue_upvotes (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  issue_id    UUID NOT NULL REFERENCES public.issues(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES public.users(id)  ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  -- Unique constraint: one vote per user per issue
+  CONSTRAINT unique_user_issue_upvote UNIQUE (user_id, issue_id)
+);
+
+
+ALTER TABLE public.issue_upvotes ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "Users can read upvotes"
+  ON public.issue_upvotes FOR SELECT
+  TO authenticated
+  USING (true);
+
+
+CREATE POLICY "Users can insert own upvote"
+  ON public.issue_upvotes FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can only delete their own vote
+CREATE POLICY "Users can delete own upvote"
+  ON public.issue_upvotes FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+
+-- ============================================================
+ALTER TABLE public.issues
+  ADD COLUMN IF NOT EXISTS upvotes INTEGER NOT NULL DEFAULT 0;
+
+-- 4. RPC: increment_upvote — atomic +1 on issues.upvotes
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.increment_upvote(issue_id UUID)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  UPDATE public.issues
+  SET upvotes = upvotes + 1
+  WHERE id = issue_id;
+$$;
+
+-- 5. RPC: decrement_upvote — atomic -1 (never below 0)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.decrement_upvote(issue_id UUID)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  UPDATE public.issues
+  SET upvotes = GREATEST(upvotes - 1, 0)
+  WHERE id = issue_id;
+$$;
+
+-- 6. Index for fast lookup of user votes
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_issue_upvotes_user_id
+  ON public.issue_upvotes(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_issue_upvotes_issue_id
+  ON public.issue_upvotes(issue_id);
+
+-- 7. Index for fast admin sort by upvotes
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_issues_upvotes_desc
+  ON public.issues(upvotes DESC);
